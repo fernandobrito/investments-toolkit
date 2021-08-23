@@ -1,6 +1,7 @@
 # Investments toolkit
 
 [![Code checks](https://github.com/fernandobrito/investments-toolkit/actions/workflows/run-code-checks.yaml/badge.svg)](https://github.com/fernandobrito/investments-toolkit/actions/workflows/run-code-checks.yaml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Apache License 2.0](https://img.shields.io/github/license/fernandobrito/investments-toolkit)](https://github.com/voi-oss/dbt-exposures-crawler/)
 
 My personal collection of scripts and automations to help me handle my equity investments.
