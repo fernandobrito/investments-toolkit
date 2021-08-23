@@ -9,6 +9,16 @@ Currently, it only has features related to calculating the correlation of a list
 
 ## Portfolio correlation
 
+<p align="center">
+    <a href="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_matrix.png">
+        <img 
+          src="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_matrix.png?raw=true" 
+          alt="Correlation matrix"
+          width="800px"
+        />
+    </a>
+</p>
+
 Features:
 
 * Caches the results of data feeds API requests
