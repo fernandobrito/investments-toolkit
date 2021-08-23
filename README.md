@@ -10,9 +10,9 @@ Currently, it only has features related to calculating the correlation of a list
 ## Portfolio correlation
 
 <p align="center">
-    <a href="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_matrix.png">
+    <a href="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_matrix.gif">
         <img 
-          src="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_matrix.png?raw=true" 
+          src="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_matrix.gif?raw=true" 
           alt="Correlation matrix"
           width="800px"
         />
