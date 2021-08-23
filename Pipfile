@@ -11,6 +11,7 @@ plotly = "~= 5.2.1"
 scipy = "~= 1.7.1"
 numpy = "~= 1.21.2"
 python-dotenv = "~= 0.19.0"
+kaleido = "~= 0.2.1"
 
 [dev-packages]
 mypy = "~= 0.910"
