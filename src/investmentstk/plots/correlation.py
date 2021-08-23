@@ -60,7 +60,7 @@ def cluster_by_correlation(df):
 
 
 def format_tick_values(boundaries):
-    return [np.mean(boundaries[k : k + 2]) for k in range(len(boundaries) - 1)]
+    return [np.mean(boundaries[k : k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
 
 
 def format_tick_text(boundaries):
