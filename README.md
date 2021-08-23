@@ -19,7 +19,9 @@ Currently, it only has features related to calculating the correlation of a list
     </a>
 </p>
 
-Features:
+This graph was taken from one of the the [example files](examples/correlation_from_list.ipynb).
+
+### Features:
 
 * Caches the results of data feeds API requests
 * Calculates a correlation matrix and plots it
