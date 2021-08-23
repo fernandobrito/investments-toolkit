@@ -13,6 +13,7 @@ class Bar:
     """
     A generic representation of a price bar
     """
+
     time: datetime
     open: float
     close: float

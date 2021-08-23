@@ -10,6 +10,7 @@ class Source(Enum):
     """
     The supported sources. Each
     """
+
     Avanza = auto()
     CMC = auto()
 

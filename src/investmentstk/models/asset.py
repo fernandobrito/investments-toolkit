@@ -8,6 +8,7 @@ class Asset(NamedTuple):
     """
     A generic representation of an asset in a data feed
     """
+
     name: str
     source: Source
     source_id: str

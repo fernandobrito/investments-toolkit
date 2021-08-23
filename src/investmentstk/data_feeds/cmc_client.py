@@ -16,8 +16,9 @@ class CMCClient(DataFeed):
     It uses the same public API used by their public price page.
     Example: https://www.cmcmarkets.com/en-gb/instruments/sugar-raw-cash
     """
+
     # Public API key from just going to their website
-    API_KEY: ClassVar[str] = os.environ['CMC_API_KEY']
+    API_KEY: ClassVar[str] = os.environ["CMC_API_KEY"]
 
     def retrieve_bars(self, source_id: str) -> BarSet:
         with requests_cache.enabled(backend=file_cache):
