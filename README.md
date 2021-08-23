@@ -1,5 +1,8 @@
 # Investments toolkit
 
+[![Code checks](https://github.com/fernandobrito/investments-toolkit/actions/workflows/run-code-checks.yaml/badge.svg)](https://github.com/fernandobrito/investments-toolkit/actions/workflows/run-code-checks.yaml)
+[![Apache License 2.0](https://img.shields.io/github/license/fernandobrito/investments-toolkit)](https://github.com/voi-oss/dbt-exposures-crawler/)
+
 My personal collection of scripts and automations to help me handle my equity investments.
 
 Currently, it only has features related to calculating the correlation of a list of assets.
