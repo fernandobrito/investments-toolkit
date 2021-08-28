@@ -26,11 +26,15 @@ setup(
     packages=find_packages(where="src"),
     python_requires=">=3.9, <4",
     install_requires=[
+        "fastapi[all] ~= 0.68.1",
+        "google-cloud-firestore ~= 2.3.0",
         "requests ~= 2.26.0",
-        "requests-cache[json] ~= 0.7.4",
+        "requests-cache[json] @ git+https://github.com/reclosedev/requests-cache",
         "pandas ~= 1.3.2",
-        "plotly ~= 5.2.1",
         "scipy ~= 1.7.1",
-        "numpy ~= 1.21.2"
+        "numpy ~= 1.21.2",
+        "plotly ~= 5.2.1",
+        "kaleido ~= 0.2.1",
+        "python-dotenv ~= 0.19.0"
     ]
 )

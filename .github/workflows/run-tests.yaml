@@ -1,4 +1,4 @@
-name: Code checks
+name: Tests
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: main
 
 jobs:
-  run-code-checks:
-    name: Run code checks
+  run-tests:
+    name: Run tests
     runs-on: ubuntu-latest
 
     steps:
@@ -31,11 +31,15 @@ jobs:
       - name: Install Python dependencies
         run: pipenv install --dev
 
-      - name: Run
+      - name: Install this package
         run: pipenv run pip3 install .
 
-      - name: Run type checking
-        run: make type
+      - name: Run tests (with coverage)
+        env:
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
+        run: make test-coverage
 
-      - name: Run lint tools
-        run: make check-lint
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true

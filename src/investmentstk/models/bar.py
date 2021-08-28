@@ -1,7 +1,6 @@
-from collections import Mapping
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Set
+from typing import Set, Mapping
 
 import pandas as pd
 

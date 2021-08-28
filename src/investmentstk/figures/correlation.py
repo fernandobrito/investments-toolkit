@@ -1,25 +1,44 @@
 import numpy as np
 import plotly.express as px
 import scipy.cluster.hierarchy as sch
+from pandas import DataFrame
 
 
-def plot_correlation_matrix(dataframe, *, interactive=False, **kwargs):
+def generate_binned_figure(dataframe, **kwargs):
+    boundaries = [-1, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1]
+    red_blue = px.colors.diverging.RdBu
+    colors = [red_blue[0], red_blue[2], red_blue[4], "white", red_blue[-5], red_blue[-3], red_blue[-1]]
+    colorscale = discrete_colorscale(boundaries, colors)
+
+    boundaries = np.array(boundaries)
+    tick_values = format_tick_values(boundaries)
+    tick_text = format_tick_text(boundaries)
+
+    figure = px.imshow(dataframe, zmin=-1, zmax=1, **kwargs)
+    figure.layout.coloraxis1.colorscale = colorscale
+    figure.layout.coloraxis1.colorbar = dict(thickness=20, tickvals=tick_values, ticktext=tick_text)
+
+    return figure
+
+
+def generate_figure(dataframe, **kwargs):
     """
     Useful references:
     * https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
     * https://stackoverflow.com/questions/52787431/create-clusters-using-correlation-matrix-in-python
     * https://github.com/TheLoneNut/CorrelationMatrixClustering/blob/master/CorrelationMatrixClustering.ipynb
 
-    :param interactive:
     :param dataframe:
     :return:
     """
-    fig = px.imshow(dataframe, zmin=-1, zmax=1, color_continuous_scale="rdbu", **kwargs)
+    return px.imshow(dataframe, zmin=-1, zmax=1, color_continuous_scale="rdbu", **kwargs)
 
+
+def show_figure(figure, *, interactive=True):
     if interactive:
-        fig.show()
+        figure.show()
     else:
-        fig.show("png")
+        figure.show("png")
 
 
 def discrete_colorscale(boundaries, colors):
@@ -48,15 +67,15 @@ def discrete_colorscale(boundaries, colors):
     return colorscale
 
 
-def cluster_by_correlation(df):
-    correlations = df.corr().values
+def cluster_by_correlation(dataframe: DataFrame) -> DataFrame:
+    correlations = dataframe.corr().values
     distances = sch.distance.pdist(correlations)  # vector of ('55' choose 2) pairwise distances
     links = sch.linkage(distances, method="complete")
     ind = sch.fcluster(links, 0.5 * distances.max(), "distance")
-    columns = [df.columns.tolist()[i] for i in list((np.argsort(ind)))]
-    df = df.reindex(columns, axis=1)
+    columns = [dataframe.columns.tolist()[i] for i in list((np.argsort(ind)))]
+    dataframe = dataframe.reindex(columns, axis=1)
 
-    return df
+    return dataframe
 
 
 def format_tick_values(boundaries):
