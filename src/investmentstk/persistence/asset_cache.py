@@ -1,11 +1,12 @@
 import os
+from typing import Optional
 
 from google.cloud import firestore
 
 from investmentstk.models import asset
 from investmentstk.utils.logger import get_logger
 
-GCP_PROJECT = os.environ["GCP_PROJECT_NAME"]
+GCP_PROJECT = os.environ.get("GCP_PROJECT_NAME")
 CACHE_COLLECTION_NAME = "cache"
 ASSETS_CACHE_DOCUMENT_NAME = "assets"
 
@@ -31,7 +32,11 @@ class AssetCache:
 
         return AssetCache.__instance
 
-    def retrieve(self, asset_fqn_id):
+    def retrieve(self, asset_fqn_id: str) -> Optional['Asset']:
+        if not self.is_enabled():
+            logger.debug("[AssetCache] Cache is disabled")
+            return None
+
         if self.assets:
             logger.debug("[AssetCache] Local cache is not empty")
             return self.assets.get(asset_fqn_id)
@@ -50,12 +55,19 @@ class AssetCache:
 
         return self.assets.get(asset_fqn_id)
 
-    def add_asset(self, asset):
+    def add_asset(self, asset: 'Asset') -> None:
+        if not self.is_enabled():
+            logger.debug("[AssetCache] Cache is disabled")
+            return None
+
         self.assets_ref.update({firestore.Client.field_path(asset.fqn_id): asset.to_dict()})
 
         # Invalidates the cache
         logger.debug("[AssetCache] Invaliding the local cache after modifying the remote cache")
         self.assets = None
 
-    def start_empty_cache(self):
+    def start_empty_cache(self) -> None:
         self.assets_ref.create({})
+
+    def is_enabled(self) -> bool:
+        return GCP_PROJECT is not None
