@@ -1,19 +1,25 @@
 import os
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, Mapping
 
 from google.cloud import firestore
 
 from investmentstk.models import asset
 from investmentstk.utils.logger import get_logger
 
-GCP_PROJECT = os.environ.get("GCP_PROJECT_NAME")
+GCP_PROJECT_NAME = os.environ.get("GCP_PROJECT_NAME")
 CACHE_COLLECTION_NAME = "cache"
 ASSETS_CACHE_DOCUMENT_NAME = "assets"
 
 logger = get_logger()
 
 
+@dataclass(init=False)
 class AssetCache:
+    assets: Optional[Mapping[str, "asset.Asset"]] = field()
+    remote_db: firestore.Client = field()
+    assets_ref: firestore.DocumentReference = field()
+
     __instance = None
 
     # Singleton pattern: https://python-3-patterns-idioms-test.readthedocs.io/en/latest/Singleton.html
@@ -23,7 +29,7 @@ class AssetCache:
             AssetCache.__instance = object.__new__(cls)
 
             AssetCache.__instance.assets = None
-            AssetCache.__instance.remote_db = firestore.Client(project=GCP_PROJECT)
+            AssetCache.__instance.remote_db = firestore.Client(project=GCP_PROJECT_NAME)
             AssetCache.__instance.assets_ref = AssetCache.__instance.remote_db.collection(
                 CACHE_COLLECTION_NAME
             ).document(ASSETS_CACHE_DOCUMENT_NAME)
@@ -32,7 +38,7 @@ class AssetCache:
 
         return AssetCache.__instance
 
-    def retrieve(self, asset_fqn_id: str) -> Optional['Asset']:
+    def retrieve(self, asset_fqn_id: str) -> Optional["asset.Asset"]:
         if not self.is_enabled():
             logger.debug("[AssetCache] Cache is disabled")
             return None
@@ -55,7 +61,7 @@ class AssetCache:
 
         return self.assets.get(asset_fqn_id)
 
-    def add_asset(self, asset: 'Asset') -> None:
+    def add_asset(self, asset: "asset.Asset") -> None:
         if not self.is_enabled():
             logger.debug("[AssetCache] Cache is disabled")
             return None
@@ -69,5 +75,6 @@ class AssetCache:
     def start_empty_cache(self) -> None:
         self.assets_ref.create({})
 
-    def is_enabled(self) -> bool:
-        return GCP_PROJECT is not None
+    @staticmethod
+    def is_enabled() -> bool:
+        return GCP_PROJECT_NAME is not None
