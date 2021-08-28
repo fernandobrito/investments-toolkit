@@ -1,3 +1,16 @@
+APP_NAME?=investments-toolkit
+REGISTRY?=eu.gcr.io/$(GCP_PROJECT_NAME)
+IMAGE=$(REGISTRY)/$(APP_NAME)
+SHORT_SHA?=$(shell git rev-parse --short HEAD)
+VERSION?=$(SHORT_SHA)
+
+#######################
+# Development
+#######################
+.PHONY: serve
+serve:
+	@uvicorn investmentstk.server:app --reload
+
 .PHONY: type
 type:
 	@echo "Running mypy"
@@ -15,7 +28,20 @@ lint:
 	@echo "Running black"
 	@pipenv run black src/
 	@echo "Running flake"
-	@pipenv run flake8 src/#######################
+	@pipenv run flake8 src/
+
+.PHONY: test
+test:
+	@echo "Running pytest"
+	@pipenv run pytest
+
+.PHONY: test-coverage
+test-coverage:
+	@echo "Running pytest (with coverage)"
+	@pipenv run pytest --cov --cov-report=xml
+
+
+#######################
 # Deployment
 #######################
 .PHONY: image
