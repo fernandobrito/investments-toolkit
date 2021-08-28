@@ -4,6 +4,9 @@ from typing import Optional, Mapping
 from investmentstk.models.bar import BarSet
 from investmentstk.models.source import Source, build_data_feed_from_source
 from investmentstk.persistence import asset_cache
+from investmentstk.utils.logger import get_logger
+
+logger = get_logger()
 
 
 @dataclass(frozen=True)
@@ -26,15 +29,17 @@ class Asset:
         source_value, source_id = fqn_id.split(":")
         source = Source(source_value)
 
+        logger.info(f"[Asset] Creating asset from ID: {fqn_id}")
+
         # Look at the cache, which is lazily loaded
         cache = asset_cache.AssetCache()
         cached_asset = cache.retrieve(fqn_id)
 
         if cached_asset:
-            print("[Asset] Found in local cache")
+            logger.debug("[Asset] Found in local cache")
             return cached_asset
         else:
-            print("[Asset] Not found in cache. Retrieving from the source and adding to the remote cache")
+            logger.debug("[Asset] Not found in cache. Retrieving from the source and adding to the remote cache")
             client = build_data_feed_from_source(source)
             name = client.retrieve_asset_name(source_id)
 
