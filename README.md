@@ -6,9 +6,9 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Apache License 2.0](https://img.shields.io/github/license/fernandobrito/investments-toolkit)](https://github.com/voi-oss/dbt-exposures-crawler/)
 
-My personal collection of scripts and automations to help me handle my equity investments.
+My personal collection of scripts and automations to help me handle my investments.
 
-Currently, it only has features related to calculating the correlation of a list of assets.
+Currently, the most relevant feature is related to calculating the correlation between multiple assets.
 
 ## Overall features
 
