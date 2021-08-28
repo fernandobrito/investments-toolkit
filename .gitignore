@@ -1,6 +1,7 @@
 # Project
 cache/http_cache
 cache/*.sqlite
+key*.json
 
 # IDE
 .idea
