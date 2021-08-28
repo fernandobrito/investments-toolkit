@@ -34,6 +34,8 @@ jobs:
         run: pipenv run pip3 install .
 
       - name: Run tests (with coverage)
+        env:
+          CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
         run: make test-coverage
 
       - name: Upload coverage to Codecov
