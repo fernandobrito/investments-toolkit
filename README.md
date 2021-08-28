@@ -19,14 +19,17 @@ Currently, it only has features related to calculating the correlation of a list
 * Exposes some of the graphs through HTTP ([FastAPI](https://fastapi.tiangolo.com/)). Useful for creating links from my
   Google Sheets
 * Exposes some of the raw outputs as CSV through HTTP (FastAPI). Useful for embedding the results in Google Sheets
-* Containerized as a Docker image and ready to be deployed on [Google Cloud Run](https://cloud.google.com/run)
-* Interactive graphs using [Plotly](https://github.com/plotly/plotly.py)
+* Containerized as a Docker image and ready to be deployed in the
+  cloud ([Google Cloud Run](https://cloud.google.com/run))
+* Interactive graphs ([Plotly](https://github.com/plotly/plotly.py))
 
 ## Portfolio correlation
 
-Calculates a correlation matrix between multiple assets.
+Calculates a correlation matrix between multiple assets. As part of my trading strategy, I am interested in knowning the
+current level of correlation between the assets that I already own. Additionally, when I am opening new positions, I
+want to select the assets with the least correlation possible to my current portfolio.
 
-### Specific features:
+### Specific features
 
 * Calculates a correlation matrix and plots it on a interactive graph
 * Uses clustering to order the correlation matrix, making it easier to interpret it
