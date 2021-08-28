@@ -7,8 +7,10 @@ on:
     branches: main
 
 jobs:
-  run-lint:
+  run-code-checks:
+    name: Run code checks
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
 
