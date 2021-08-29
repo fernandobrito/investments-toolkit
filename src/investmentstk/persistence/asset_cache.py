@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Mapping
 
 from google.cloud import firestore
@@ -16,9 +16,13 @@ logger = get_logger()
 
 @dataclass(init=False)
 class AssetCache:
-    assets: Optional[Mapping[str, "asset.Asset"]] = field()
-    remote_db: firestore.Client = field()
-    assets_ref: firestore.DocumentReference = field()
+    """
+    Keeps a local and a remote (using Google Firestore) cache of assets metadata
+    """
+
+    assets: Optional[Mapping[str, "asset.Asset"]]
+    remote_db: firestore.Client
+    assets_ref: firestore.DocumentReference
 
     __instance = None
 
@@ -39,6 +43,9 @@ class AssetCache:
         return AssetCache.__instance
 
     def retrieve(self, asset_fqn_id: str) -> Optional["asset.Asset"]:
+        """
+        Retrieves an asset given its ID
+        """
         if not self.is_enabled():
             logger.debug("[AssetCache] Cache is disabled")
             return None
@@ -62,6 +69,9 @@ class AssetCache:
         return self.assets.get(asset_fqn_id)
 
     def add_asset(self, asset: "asset.Asset") -> None:
+        """
+        Adds an asset to the cache
+        """
         if not self.is_enabled():
             logger.debug("[AssetCache] Cache is disabled")
             return None
