@@ -1,9 +1,10 @@
 from enum import Enum
 from tempfile import SpooledTemporaryFile
-from typing import Optional
+from typing import Iterable, Union
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
+from pandas import DataFrame
 
 from investmentstk.figures import correlation
 from investmentstk.figures.correlation import cluster_by_correlation
@@ -25,43 +26,78 @@ async def root():
 
 
 @app.get("/correlations")
-async def correlations(p: str, i: Optional[str] = None, f: OutputFormat = OutputFormat.CSV):
+async def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
     """
+    Calculates a clustered correlation matrix of assets provided in the portfolio (`p` parameter).
+    If a list of external assets is provided (`e` parameter), after the clustering is done, it appends
+    such assets to the list to allow for comparison.
 
+    The output can be either a standalone HTML page with a Plotly graph or a "csv" plain text format
 
     Example:
     http://localhost:8000/correlations?p=NN:5325,AV:5442,AV:26607,AV:5537&f=g
     http://localhost:8000/correlations?p=NN:5325,AV:5442,AV:26607,AV:5537&f=csv
 
     :param p: CSV of assets in the portfolio, in the format AV:XXXX,AV:YYYY,CMC:ZZZZ
-    :param i: optional CSV of assets of interest
+    :param e: optional CSV of "extra"assets
     :param f: output format. Either "g" for Graph (standalone HTML page with Plotly graph) or "csv" for plain
     text with CSV
     :return:
     """
-    portfolio: list[Asset] = [Asset.from_id(fqn_id) for fqn_id in p.split(",") if fqn_id != "" and fqn_id != ":"]
+    portfolio: list[Asset] = _parse_input_list(p)
+    external: list[Asset] = _parse_input_list(e)
 
-    assets_dfs = []
+    # Prepare portfolio dataframe
+    dataframe = _prepare_dataframe(portfolio)
+    dataframe = convert_to_pct_change(dataframe)
+    clustered_dataframe = cluster_by_correlation(dataframe)
 
-    for asset in portfolio:
-        bars = asset.retrieve_prices()
-        df = barset_to_dataframe(bars, asset)
-        assets_dfs.append(df)
+    # Prepare and merge interest dataframe
+    if external:
+        interest_df = _prepare_dataframe(external)
+        interest_df = convert_to_pct_change(interest_df)
+        clustered_dataframe = merge_dataframes([clustered_dataframe, interest_df])
 
-    df = merge_dataframes(assets_dfs)
-    df = convert_to_pct_change(df)
+    clustered_df_corr = clustered_dataframe.corr()
 
-    clustered_df = cluster_by_correlation(df)
-    clustered_df_corr = clustered_df.corr()
+    # Handles both output formats
+    return _format_output(clustered_df_corr, f)
 
-    if f != OutputFormat.Graph:
-        # return JSONResponse(dict(col1=[1, 2, 3, 4], col2=[5, 6, 7, 8, 9], col3=dict(subcol=[1, 2, 3])))
-        return PlainTextResponse(clustered_df_corr.to_csv(sep=";"))
 
-    figure = correlation.generate_binned_figure(clustered_df_corr)
+def _parse_input_list(input_list: str) -> list[Asset]:
+    """
+    Converts a CSV list of asset IDs into Asset objects
+    """
+    return [Asset.from_id(fqn_id) for fqn_id in input_list.split(",") if fqn_id != "" and fqn_id != ":"]
+
+
+def _format_output(dataframe: DataFrame, format: OutputFormat) -> Union[PlainTextResponse, HTMLResponse]:
+    """
+    Formats a dataframe into one of the supported output formats.
+    """
+    if format != OutputFormat.Graph:
+        return PlainTextResponse(dataframe.to_csv(sep=";"))
+
+    figure = correlation.generate_binned_figure(dataframe)
 
     with SpooledTemporaryFile(mode="w+") as in_memory_file:
         figure.write_html(in_memory_file, include_plotlyjs="cdn", full_html=True, auto_open=False)
         in_memory_file.seek(0)
 
         return HTMLResponse(in_memory_file.read())
+
+
+def _prepare_dataframe(portfolio: Iterable[Asset]) -> DataFrame:
+    """
+    Takes a list of Assets and returns a single dataframe with them merged
+    """
+    dataframes = []
+
+    for asset in portfolio:
+        bars = asset.retrieve_prices()
+        dataframe = barset_to_dataframe(bars, asset)
+        dataframes.append(dataframe)
+
+    merged_dataframe = merge_dataframes(dataframes)
+
+    return merged_dataframe

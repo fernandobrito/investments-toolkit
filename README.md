@@ -65,6 +65,23 @@ Sheets while still keeping the interactivity.
     </a>
 </p>
 
+#### Other assets with portfolio
+
+During the screening process before starting new positions, it is possible to provide an extra list of assets other than
+the ones in your portfolio. Those assets will be appended at the end of the correlation matrix, after the clustering
+step is done. This facilitates identifying which one of the extra assets have the lowest correlation to the assets in
+your current portfolio.
+
+<p align="center">
+    <a href="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_extra.png">
+        <img 
+          src="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/correlation_extra.png?raw=true" 
+          alt="Correlation interactive matrix"
+          width="600px"
+        />
+    </a>
+</p>
+
 #### Via HTTP server (CSV)
 
 Useful for embedding the results in Google Sheets

@@ -9,7 +9,7 @@ VERSION?=$(SHORT_SHA)
 #######################
 .PHONY: serve
 serve:
-	@uvicorn investmentstk.server:app --reload
+	@uvicorn investmentstk.server:app --reload --reload-dir=src/
 
 .PHONY: type
 type:

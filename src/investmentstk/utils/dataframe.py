@@ -13,6 +13,7 @@ def convert_to_pct_change(dataframe: DataFrame) -> DataFrame:
     :return: a copy of the dataframe
     """
     dataframe = dataframe.copy()
+    dataframe = dataframe.sort_index()
 
     for column in dataframe:
         dataframe[column] = dataframe[column].pct_change()
@@ -29,6 +30,5 @@ def merge_dataframes(dataframes: list[DataFrame], join: str = "outer") -> DataFr
     :return:
     """
     dataframe = pd.concat(dataframes, axis="columns", join=join)
-    dataframe = dataframe.sort_index()
 
     return dataframe
