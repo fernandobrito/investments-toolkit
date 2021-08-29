@@ -72,9 +72,7 @@ def discrete_colorscale(boundaries: Sequence[float], colors: Sequence[str]) -> l
         raise ValueError("len(boundary values) should be equal to  len(colors)+1")
 
     boundaries = sorted(boundaries)
-    normalized_values = [
-        (v - boundaries[0]) / (boundaries[-1] - boundaries[0]) for v in boundaries
-    ]
+    normalized_values = [(v - boundaries[0]) / (boundaries[-1] - boundaries[0]) for v in boundaries]
 
     colorscale: list[list[Any]] = []
 
@@ -112,7 +110,7 @@ def format_tick_values(boundaries: Sequence[float]) -> list[float]:
 
     Example: for boundaries [-1, 0, 1], ticks will be in -0.5 and 0.5
     """
-    return [np.mean(boundaries[k: k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
+    return [np.mean(boundaries[k : k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
 
 
 def format_tick_text(boundaries: Sequence[float]) -> list[str]:

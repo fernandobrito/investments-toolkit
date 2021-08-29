@@ -2,11 +2,10 @@ import os
 from typing import ClassVar, Optional
 
 import requests
-import requests_cache
 
 from investmentstk.data_feeds.data_feed import DataFeed
 from investmentstk.models.bar import BarSet, Bar
-from investmentstk.persistence.requests_cache import file_cache
+from investmentstk.persistence.requests_cache import requests_cache_configured
 
 
 class CMCClient(DataFeed):
@@ -17,6 +16,7 @@ class CMCClient(DataFeed):
     # Public API key from just going to their website
     API_KEY: ClassVar[str] = os.environ["CMC_API_KEY"]
 
+    @requests_cache_configured()
     def retrieve_bars(self, source_id: str, instrument_type: Optional[str] = None) -> BarSet:
         """
         Uses the same public API used by their public price page.
@@ -28,11 +28,10 @@ class CMCClient(DataFeed):
         :param instrument_type:
         :return:
         """
-        with requests_cache.enabled(backend=file_cache):
-            response = requests.get(
-                f"https://oaf.cmcmarkets.com/instruments/prices/{source_id}/MONTH/6",
-                params={"key": self.API_KEY},
-            )
+        response = requests.get(
+            f"https://oaf.cmcmarkets.com/instruments/prices/{source_id}/MONTH/6",
+            params={"key": self.API_KEY},
+        )
 
         bars: BarSet = set()
         data = response.json()
@@ -42,11 +41,11 @@ class CMCClient(DataFeed):
 
         return bars
 
+    @requests_cache_configured()
     def retrieve_asset_name(self, source_id: str, instrument_type: Optional[str] = "stock") -> str:
-        with requests_cache.enabled(backend=file_cache):
-            response = requests.get(
-                f"https://oaf.cmcmarkets.com/json/instruments/{source_id}_gb.json",
-                params={"key": self.API_KEY},
-            )
+        response = requests.get(
+            f"https://oaf.cmcmarkets.com/json/instruments/{source_id}_gb.json",
+            params={"key": self.API_KEY},
+        )
 
-            return response.json()["name"]
+        return response.json()["name"]
