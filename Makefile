@@ -33,12 +33,12 @@ lint:
 .PHONY: test
 test:
 	@echo "Running pytest"
-	@pipenv run pytest tests/ --doctest-modules src/investmentstk/
+	@pipenv run pytest --doctest-modules
 
 .PHONY: test-coverage
 test-coverage:
 	@echo "Running pytest (with coverage)"
-	@pipenv run pytest tests/ --doctest-modules src/investmentstk/ --cov --cov-report=xml
+	@pipenv run pytest --doctest-modules --cov --cov-report=xml
 
 
 #######################
