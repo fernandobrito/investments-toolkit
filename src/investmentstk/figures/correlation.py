@@ -18,11 +18,11 @@ def generate_binned_figure(dataframe: DataFrame, **kwargs) -> Figure:
     colorscale = discrete_colorscale(boundaries, colors)
 
     tick_values = format_tick_values(boundaries)
-    tick_text = format_tick_text(boundaries)
+    tick_labels = format_tick_labels(boundaries)
 
     figure = px.imshow(dataframe, zmin=-1, zmax=1, **kwargs)
     figure.layout.coloraxis1.colorscale = colorscale
-    figure.layout.coloraxis1.colorbar = dict(thickness=20, tickvals=tick_values, ticktext=tick_text)
+    figure.layout.coloraxis1.colorbar = dict(thickness=20, tickvals=tick_values, ticktext=tick_labels)
 
     return figure
 
@@ -107,19 +107,13 @@ def format_tick_values(boundaries: Sequence[float]) -> list[float]:
     """
     Formats the tick values from the boundaries to be used to position the tick text in the color legend of the graph.
     Tick texts are position in the middle of the range.
-
-    >>> format_tick_values([-1, -0.5, 0, 0.5, 1])
-    [-0.75, -0.25, 0.25, 0.75]
     """
     return [np.mean(boundaries[k : k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
 
 
-def format_tick_text(boundaries: Sequence[float]) -> list[str]:
+def format_tick_labels(boundaries: Sequence[float]) -> list[str]:
     """
     Creates tick texts from the boundaries to be used in the color legend of the graph.
-
-    >>> format_tick_text([-1, -0.5, 0, 0.5, 1])
-    ['< -0.5', '-0.5 to 0', '0 to 0.5', '> 0.5']
     """
     return (
         [f"< {boundaries[1]}"]

@@ -19,26 +19,26 @@ type:
 .PHONY: check-lint
 check-lint:
 	@echo "Running black"
-	@pipenv run black --check src/
+	@pipenv run black --check src/ tests/
 	@echo "Running flake"
-	@pipenv run flake8 src/
+	@pipenv run flake8 src/ tests/
 
 .PHONY: lint
 lint:
 	@echo "Running black"
-	@pipenv run black src/
+	@pipenv run black src/ tests/
 	@echo "Running flake"
-	@pipenv run flake8 src/
+	@pipenv run flake8 src/ tests/
 
 .PHONY: test
 test:
 	@echo "Running pytest"
-	@pipenv run pytest --doctest-modules
+	@pipenv run pytest
 
 .PHONY: test-coverage
 test-coverage:
 	@echo "Running pytest (with coverage)"
-	@pipenv run pytest --doctest-modules --cov --cov-report=xml
+	@pipenv run pytest --cov --cov-report=xml
 
 
 #######################

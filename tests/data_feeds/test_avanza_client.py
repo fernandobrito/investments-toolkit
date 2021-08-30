@@ -12,7 +12,7 @@ def subject() -> AvanzaClient:
 
 @pytest.fixture
 def volvo() -> Asset:
-    return Asset(Source.Avanza, '5269', 'VOLV B')
+    return Asset(Source.Avanza, "5269", "VOLV B")
 
 
 @pytest.mark.external_http
@@ -22,7 +22,7 @@ def test_retrieve_bars(subject, volvo):
     first_bar = list(bars)[0]
 
     assert len(bars) > 0
-    assert (first_bar.high >= first_bar.low)
+    assert first_bar.high >= first_bar.low
 
 
 @pytest.mark.external_http

@@ -66,11 +66,6 @@ class Asset:
     def parse_fqn_id(fqn_id: str) -> tuple[Source, str]:
         """
         Parses a FQN ID into a source and source_id.
-
-        >>> Asset.parse_fqn_id("AV:1234")
-        (<Source.Avanza: 'AV'>, '1234')
-        >>> Asset.parse_fqn_id("CMC:4567")
-        (<Source.CMC: 'CMC'>, '4567')
         """
         source_value, source_id = fqn_id.split(":")
         source = Source(source_value)
