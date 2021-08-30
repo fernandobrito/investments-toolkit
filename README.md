@@ -8,9 +8,13 @@
 
 My personal collection of scripts and automations to help me handle my investments.
 
-Currently, the most relevant feature is related to calculating the correlation between multiple assets.
+## Summary
 
-## Overall features
+* Calculates the correlation matrix of the assets in my portfolio (and optionally compare it with an extra list of
+  assets)
+* Unified (HTTP) endpoint for getting the latest price from different sources
+
+### Generic features
 
 * Caches the results of HTTP requests locally (file system backend
   from [requests-cache](https://github.com/reclosedev/requests-cache)). Useful for local development
@@ -25,14 +29,17 @@ Currently, the most relevant feature is related to calculating the correlation b
 
 ## Portfolio correlation
 
+### Motivation
+
 Calculates a correlation matrix between multiple assets. As part of my trading strategy, I am interested in knowning the
 current level of correlation between the assets that I already own. Additionally, when I am opening new positions, I
 want to select the assets with the least correlation possible to my current portfolio.
 
 ### Specific features
 
-* Calculates a correlation matrix and plots it on a interactive graph
+* Calculates a correlation matrix and plots it on an interactive graph
 * Uses clustering to order the correlation matrix, making it easier to interpret it
+* Serves the output via HTTP either as a graph or as a CSV
 
 ### Usage examples
 
@@ -96,6 +103,31 @@ Useful for embedding the results in Google Sheets
         />
     </a>
 </p>
+
+## Latest price
+
+First I started using `=GOOGLEFINANCE()` in my Google Sheets spreadsheet to get the latest price and a % variation for
+the day for each asset. At some point, some of my new stocks were not available in Google Finance and I had to
+use `=IMPORTXML()` to parse the public page from my broker to retrieve the same information. And then, I started using
+multiple brokers and I had to introduce `=ImportJSON()` for those as well, which made it quite cumbersome to maintain
+within the spreadsheet.
+
+In this project, I hide this complexity from my spreadsheet by just exposing a `/price/<asset_id>` to handle all the
+different data feeds.
+
+In other words, I could replace this:
+
+```
+=GOOGLEFINANCE(CONCATENATE(D20, ":", SUBSTITUTE($F20, "_", "-")), "changepct")/100
+=INDEX(ImportJSON("https://oaf.cmcmarkets.com/instruments/price/X-AASOB?key=<KEY>", "/movement_percentage"), 2, 1)/100
+=VALUE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(IMPORTXML("https://www.avanza.se/aktier/gamla-aktiesidan.html/666686/swedencare","//span[contains(@class, 'changePercent')]/text()"),",","."), " %", ""), "+", ""))/100
+```
+
+With this:
+
+```
+=VALUE(ImportJSON(CONCATENATE("https://<HOST>/price/", A3, ":", C3), "/change_pct", "noHeaders"))/100
+```
 
 ---
 

@@ -24,10 +24,9 @@ class Asset:
         return f"{self.source.value}:{self.source_id}"
 
     @classmethod
-    def from_id(cls, fqn_id) -> "Asset":
+    def from_id(cls, fqn_id: str) -> "Asset":
         # Parse the fqn id
-        source_value, source_id = fqn_id.split(":")
-        source = Source(source_value)
+        source, source_id = cls.parse_fqn_id(fqn_id)
 
         logger.info(f"[Asset] Creating asset from ID: {fqn_id}")
 
@@ -43,7 +42,7 @@ class Asset:
             client = build_data_feed_from_source(source)
             name = client.retrieve_asset_name(source_id)
 
-            asset = cls(source=Source(source_value), source_id=source_id, name=name)
+            asset = cls(source=source, source_id=source_id, name=name)
             cache.add_asset(asset)
 
             return asset
@@ -57,8 +56,23 @@ class Asset:
 
     def merge_dict(self, data: Mapping) -> None:
         for key, value in data.items():
-            setattr(self, key, value)
+            object.__setattr__(self, key, value)
 
     @classmethod
     def from_dict(cls, data: Mapping) -> "Asset":
         return cls(source=Source[data["source"]], source_id=data["source_id"], name=data["name"])
+
+    @staticmethod
+    def parse_fqn_id(fqn_id: str) -> tuple[Source, str]:
+        """
+        Parses a FQN ID into a source and source_id.
+
+        >>> Asset.parse_fqn_id("AV:1234")
+        (<Source.Avanza: 'AV'>, '1234')
+        >>> Asset.parse_fqn_id("CMC:4567")
+        (<Source.CMC: 'CMC'>, '4567')
+        """
+        source_value, source_id = fqn_id.split(":")
+        source = Source(source_value)
+
+        return source, source_id

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from investmentstk.models.bar import BarSet
+from investmentstk.models.price import Price
 
 
 class DataFeed(ABC):
@@ -31,4 +32,14 @@ class DataFeed(ABC):
         :param source_id: the ID for the asset in the source
         :param instrument_type: the type of instrument
         :return: the name of the asset
+        """
+
+    @abstractmethod
+    def retrieve_price(self, source_id: str, instrument_type: Optional[str] = "stock") -> Price:
+        """
+        Retrieves the last price (and % variation) of an asset.
+
+        :param source_id: the ID for the asset in the source
+        :param instrument_type: the type of instrument
+        :return: a Price object
         """

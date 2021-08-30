@@ -15,6 +15,7 @@ def nasdaq() -> Asset:
     return Asset(Source.CMC, 'X-ABFMB', 'US NDAQ 100 - Cash')
 
 
+@pytest.mark.external_http
 def test_retrieve_bars(subject, nasdaq):
     bars = subject.retrieve_bars(nasdaq.source_id)
 
@@ -24,6 +25,15 @@ def test_retrieve_bars(subject, nasdaq):
     assert (first_bar.high >= first_bar.low)
 
 
+@pytest.mark.external_http
 def test_retrieve_asset_name(subject, nasdaq):
     name = subject.retrieve_asset_name(nasdaq.source_id)
     assert name == nasdaq.name
+
+
+@pytest.mark.external_http
+def test_retrieve_price(subject, nasdaq):
+    price = subject.retrieve_price(nasdaq.source_id)
+    assert 10000 <= price.last <= 20000
+    assert -1000 <= price.change <= 1000
+    assert -10 <= price.change_pct <= 10
