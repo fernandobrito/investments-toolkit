@@ -111,7 +111,7 @@ def format_tick_values(boundaries: Sequence[float]) -> list[float]:
     >>> format_tick_values([-1, -0.5, 0, 0.5, 1])
     [-0.75, -0.25, 0.25, 0.75]
     """
-    return [np.mean(boundaries[k: k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
+    return [np.mean(boundaries[k : k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
 
 
 def format_tick_text(boundaries: Sequence[float]) -> list[str]:

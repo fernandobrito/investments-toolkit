@@ -62,6 +62,6 @@ class CMCClient(DataFeed):
         response.raise_for_status()
 
         data = response.json()
-        mid_price = (data['buy'] + data['sell']) / 2
+        mid_price = (data["buy"] + data["sell"]) / 2
 
-        return Price(last=mid_price, change=data['movement_point'], change_pct=data['movement_percentage'])
+        return Price(last=mid_price, change=data["movement_point"], change_pct=data["movement_percentage"])

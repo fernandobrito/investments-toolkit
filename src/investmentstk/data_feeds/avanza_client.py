@@ -62,4 +62,4 @@ class AvanzaClient(DataFeed):
 
         data = response.json()
 
-        return Price(last=data['lastPrice'], change=data['change'], change_pct=data['changePercent'])
+        return Price(last=data["lastPrice"], change=data["change"], change_pct=data["changePercent"])
