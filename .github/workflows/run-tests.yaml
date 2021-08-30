@@ -37,8 +37,6 @@ jobs:
       - name: Run tests (with coverage)
         env:
           CMC_API_KEY: ${{ secrets.CMC_API_KEY }}
-          # Necessary after I started using doctest together with pytest
-          PY_IGNORE_IMPORTMISMATCH: 1
         run: make test-coverage
 
       - name: Upload coverage to Codecov

@@ -12,7 +12,7 @@ def subject() -> CMCClient:
 
 @pytest.fixture
 def nasdaq() -> Asset:
-    return Asset(Source.CMC, 'X-ABFMB', 'US NDAQ 100 - Cash')
+    return Asset(Source.CMC, "X-ABFMB", "US NDAQ 100 - Cash")
 
 
 @pytest.mark.external_http
@@ -22,7 +22,7 @@ def test_retrieve_bars(subject, nasdaq):
     first_bar = list(bars)[0]
 
     assert len(bars) > 0
-    assert (first_bar.high >= first_bar.low)
+    assert first_bar.high >= first_bar.low
 
 
 @pytest.mark.external_http
