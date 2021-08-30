@@ -86,7 +86,7 @@ def cluster_by_correlation(dataframe: DataFrame) -> DataFrame:
     """
     Reorders a dataframe grouping/clustering highly clustered rows together.
 
-    Heavily inspired by from:
+    Heavily inspired by:
     * https://stackoverflow.com/questions/52787431/create-clusters-using-correlation-matrix-in-python
     * https://github.com/TheLoneNut/CorrelationMatrixClustering/blob/master/CorrelationMatrixClustering.ipynb
     """
@@ -108,19 +108,21 @@ def format_tick_values(boundaries: Sequence[float]) -> list[float]:
     Formats the tick values from the boundaries to be used to position the tick text in the color legend of the graph.
     Tick texts are position in the middle of the range.
 
-    Example: for boundaries [-1, 0, 1], ticks will be in -0.5 and 0.5
+    >>> format_tick_values([-1, -0.5, 0, 0.5, 1])
+    [-0.75, -0.25, 0.25, 0.75]
     """
-    return [np.mean(boundaries[k : k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
+    return [np.mean(boundaries[k: k + 2]) for k in range(len(boundaries) - 1)]  # noqa: E203
 
 
 def format_tick_text(boundaries: Sequence[float]) -> list[str]:
     """
     Creates tick texts from the boundaries to be used in the color legend of the graph.
 
-    Example: < -0.75, -0.75 to -0.50, -0.50 to -0.25, ...
+    >>> format_tick_text([-1, -0.5, 0, 0.5, 1])
+    ['< -0.5', '-0.5 to 0', '0 to 0.5', '> 0.5']
     """
     return (
-        [f"<{boundaries[1]}"]
+        [f"< {boundaries[1]}"]
         + [f"{boundaries[k]} to {boundaries[k + 1]}" for k in range(1, len(boundaries) - 2)]
-        + [f">{boundaries[-2]}"]
+        + [f"> {boundaries[-2]}"]
     )
