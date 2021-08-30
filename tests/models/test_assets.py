@@ -24,9 +24,3 @@ def test_to_dict(subject, subject_as_dict):
 
 def test_from_dict(subject, subject_as_dict):
     assert Asset.from_dict(subject_as_dict) == subject
-
-
-def test_merge_dict(subject):
-    subject.merge_dict(dict(source_id='9999', name='A new name'))
-    assert subject.source_id == '9999'
-    assert subject.name == 'A new name'
