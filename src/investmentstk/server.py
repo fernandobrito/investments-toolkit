@@ -10,6 +10,8 @@ from investmentstk.figures import correlation
 from investmentstk.figures.correlation import cluster_by_correlation
 from investmentstk.models.asset import Asset
 from investmentstk.models.bar import barset_to_dataframe
+from investmentstk.models.price import Price
+from investmentstk.models.source import build_data_feed_from_source
 from investmentstk.utils.dataframe import convert_to_pct_change, merge_dataframes
 
 app = FastAPI()
@@ -23,6 +25,20 @@ class OutputFormat(str, Enum):
 @app.get("/")
 async def root():
     return {"status": "ok"}
+
+
+@app.get("/price/{fqn_id}")
+async def price(fqn_id: str) -> Price:
+    """
+    Returns price details (last price, % chance) of a given asset
+
+    :param fqn_id: example: AV:XXXXX
+    :return: a Price object
+    """
+
+    source, source_id = Asset.parse_fqn_id(fqn_id)
+    source_client = build_data_feed_from_source(source)
+    return source_client.retrieve_price(source_id)
 
 
 @app.get("/correlations")
@@ -39,7 +55,7 @@ async def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
     http://localhost:8000/correlations?p=NN:5325,AV:5442,AV:26607,AV:5537&f=csv
 
     :param p: CSV of assets in the portfolio, in the format AV:XXXX,AV:YYYY,CMC:ZZZZ
-    :param e: optional CSV of "extra"assets
+    :param e: optional CSV of "extra" assets
     :param f: output format. Either "g" for Graph (standalone HTML page with Plotly graph) or "csv" for plain
     text with CSV
     :return:
