@@ -9,7 +9,7 @@ from pandas import DataFrame
 from investmentstk.figures import correlation
 from investmentstk.figures.correlation import cluster_by_correlation
 from investmentstk.models.asset import Asset
-from investmentstk.models.bar import barset_to_dataframe
+from investmentstk.models.barset import barset_to_single_column_dataframe
 from investmentstk.models.price import Price
 from investmentstk.models.source import build_data_feed_from_source
 from investmentstk.utils.dataframe import convert_to_pct_change, merge_dataframes
@@ -111,7 +111,7 @@ def _prepare_dataframe(portfolio: Iterable[Asset]) -> DataFrame:
 
     for asset in portfolio:
         bars = asset.retrieve_prices()
-        dataframe = barset_to_dataframe(bars, asset)
+        dataframe = barset_to_single_column_dataframe(bars, asset)
         dataframes.append(dataframe)
 
     merged_dataframe = merge_dataframes(dataframes)

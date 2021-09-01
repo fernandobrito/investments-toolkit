@@ -1,10 +1,7 @@
-from dataclasses import dataclass
 from datetime import datetime
-from typing import Set, Mapping
+from typing import Mapping
 
-import pandas as pd
-
-BarSet = Set["Bar"]
+from pydantic.dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -15,9 +12,9 @@ class Bar:
 
     time: datetime
     open: float
-    close: float
     high: float
     low: float
+    close: float
 
     @classmethod
     def from_avanza(cls, ohlc: Mapping) -> "Bar":
@@ -38,13 +35,3 @@ class Bar:
             high=ohlc["h"],
             low=ohlc["l"],
         )
-
-
-def barset_to_dataframe(barset: BarSet, asset, column: str = "close") -> pd.DataFrame:
-    df = pd.DataFrame(barset)
-    df = df.set_index("time")  # Assign the time as index
-    df = df[[column]]  # Use only the close price
-    df = df.rename(columns={column: asset.name})
-    df.index = df.index.date
-
-    return df

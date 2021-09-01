@@ -4,7 +4,8 @@ from typing import ClassVar, Optional
 import requests
 
 from investmentstk.data_feeds.data_feed import DataFeed
-from investmentstk.models.bar import BarSet, Bar
+from investmentstk.models.bar import Bar
+from investmentstk.models.barset import BarSet
 from investmentstk.models.price import Price
 from investmentstk.persistence.requests_cache import requests_cache_configured
 
