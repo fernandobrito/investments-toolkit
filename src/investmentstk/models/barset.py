@@ -19,7 +19,7 @@ def barset_from_csv_string(csv_string) -> BarSet:
     rows = csv_string.strip().split("\n")
 
     for row in rows:
-        time, open, high, low, close = row.split(',')
+        time, open, high, low, close = row.split(",")
         bar = Bar(time=time.strip(), open=open.strip(), high=high.strip(), low=low.strip(), close=close.strip())
         barset.add(bar)
 
