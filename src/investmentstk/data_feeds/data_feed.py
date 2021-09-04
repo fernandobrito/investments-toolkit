@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from investmentstk.models.bar import BarSet
+from investmentstk.models.barset import BarSet
 from investmentstk.models.price import Price
 
 

@@ -8,10 +8,16 @@
 
 My personal collection of scripts and automations to help me handle my investments.
 
+Note that this repository is also used for my own educational purposes (e.g. testing new libraries or technologies). I'm
+deliberately implementing myself some REST API clients and calculations (technical indicators) that are already
+available in other libraries. When I find alternative implementations, I try to link them throughout comments in the
+source code.
+
 ## Summary
 
 * Calculates the correlation matrix of the assets in my portfolio (and optionally compare it with an extra list of
   assets)
+* Calculates the Average True Range (ATR) volatility technical indicator
 * Unified (HTTP) endpoint for getting the latest price from different sources
 
 ### Generic features
@@ -129,6 +135,18 @@ With this:
 =VALUE(ImportJSON(CONCATENATE("https://<HOST>/price/", A3, ":", C3), "/change_pct", "noHeaders"))/100
 ```
 
+## Technical indicators
+
+### Average True Range
+
+> The average true range (ATR) is a technical analysis indicator, introduced by market technician J. Welles Wilder
+> Jr. [...] (it) is a market volatility indicator.
+
+Source: [Investopedia](https://www.investopedia.com/terms/a/atr.asp)
+
+I use this indicator both for position sizing and for calculating my trailing stop losses. Automating it here is my
+first step towards having this project automatically update my stop losses in the brokers I use.
+
 ---
 
 ## Architecture
@@ -148,6 +166,10 @@ Clients to interact with Google Firestore and for setting up HTTP requests local
 ### Models
 
 Python classes to represent assets, price bars and data sources.
+
+### Formulas
+
+A module to hold formulas, such as the calculation of technical indicators.
 
 ## Deployment
 

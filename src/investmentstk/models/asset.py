@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Mapping
 
-from investmentstk.models.bar import BarSet
+from investmentstk.models.barset import BarSet
 from investmentstk.models.source import Source, build_data_feed_from_source
 from investmentstk.persistence import asset_cache
 from investmentstk.utils.logger import get_logger
