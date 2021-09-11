@@ -54,9 +54,64 @@ def average_true_range(dataframe: DataFrame, periods: int = 14) -> pd.Series:
     ranges = pd.concat([high_low, high_close, low_close], axis=1)
     true_range = np.max(ranges, axis=1)
 
+    # TODO: I didn't bother parametizing this as I will always use SSMA
     # For SMA:  .rolling(periods).sum() / periods
     # For EMA:  .ewm(periods).mean()
-    # For SSMA: .ewm(alpha=1/n, adjust=False).mean()
+    # For SSMA: .ewm(alpha=1 / periods, min_periods=periods, adjust=False).mean()
     atr = true_range.ewm(alpha=1 / periods, min_periods=periods, adjust=False).mean()
 
     return atr
+
+
+def average_true_range_trailing_stop(dataframe: pd.DataFrame, periods: int = 14, multiplier: float = 3) -> pd.DataFrame:
+    """
+    Uses the ATR as a trailing stop.
+    If on "long" mode, never moves the stop down, and if on "short" mode, never move the stop up.
+
+    Returns a copy of the original dataframe with extra columns (atr, stop_distance, stop).
+
+    Similar to: https://www.tradingview.com/script/VP32b3aR-Average-True-Range-Trailing-Stops-Colored/
+    """
+    # Naive implementation. I'm not that familiar with pandas to come up with a more elegant solution
+    # I could later try using numba to optimize it: https://stackoverflow.com/a/54420250/3950305
+
+    dataframe = dataframe.copy()
+
+    atr = average_true_range(dataframe, periods)
+
+    # Add extra columns
+    dataframe["atr"] = atr
+    dataframe["stop_distance"] = atr * multiplier
+    dataframe["stop"] = np.nan
+
+    for index_i, index_df in enumerate(dataframe.index[1:], start=1):
+        previous = dataframe.iloc[index_i - 1]
+        current = dataframe.iloc[index_i]
+
+        # No ATR available (first periods)
+        if not current["atr"]:
+            continue
+
+        # If the current price is above the previous stop and the previous price was also above (no-cross),
+        # take either the previous stop or the current one, whatever is higher
+        # (when long, stop never goes down)
+        if current["close"] > previous["stop"] and previous["close"] > previous["stop"]:
+            new_stop = max(previous["stop"], current["close"] - current["stop_distance"])
+
+        # If the current price is below the previous stop and the previous price was also below (no-cross),
+        # take either the previous stop or the current one, whatever is lower
+        # (when short, stop never goes up)
+        elif current["close"] < previous["stop"] and previous["close"] < previous["stop"]:
+            new_stop = min(previous["stop"], current["close"] + current["stop_distance"])
+
+        # Otherwise, there was a cross. Check the direction and add the stop accordingly
+        else:
+            if current["close"] > previous["stop"]:
+                new_stop = current["close"] - current["stop_distance"]
+            else:
+                new_stop = current["close"] + current["stop_distance"]
+
+        # Store the stop value
+        dataframe.at[index_df, "stop"] = new_stop
+
+    return dataframe

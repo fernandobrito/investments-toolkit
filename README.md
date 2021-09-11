@@ -18,7 +18,8 @@ source code.
 * Calculates the correlation matrix of the assets in my portfolio (and optionally compare it with an extra list of
   assets)
 * Calculates the Average True Range (ATR) volatility technical indicator
-* Unified (HTTP) endpoint for getting the latest price from different sources
+* Uses ATR to calculate a trailing stop loss
+* Unified (HTTP) endpoint for getting the latest price from different sources and calculating the stop loss
 
 ### Generic features
 
