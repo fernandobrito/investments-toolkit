@@ -3,7 +3,7 @@ from typing import ClassVar, Optional
 
 import requests
 
-from investmentstk.data_feeds.data_feed import DataFeed
+from investmentstk.data_feeds.data_feed import DataFeed, TimeResolution
 from investmentstk.models.bar import Bar
 from investmentstk.models.barset import BarSet
 from investmentstk.models.price import Price
@@ -19,7 +19,9 @@ class CMCClient(DataFeed):
     API_KEY: ClassVar[str] = os.environ["CMC_API_KEY"]
 
     @requests_cache_configured()
-    def retrieve_bars(self, source_id: str, instrument_type: Optional[str] = None) -> BarSet:
+    def retrieve_bars(
+        self, source_id: str, *, resolution: TimeResolution = TimeResolution.day, instrument_type: Optional[str] = None
+    ) -> BarSet:
         """
         Uses the same public API used by their public price page.
         Example: https://www.cmcmarkets.com/en-gb/instruments/sugar-raw-cash

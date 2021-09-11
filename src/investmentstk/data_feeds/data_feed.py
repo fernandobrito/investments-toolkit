@@ -1,8 +1,15 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Optional
 
 from investmentstk.models.barset import BarSet
 from investmentstk.models.price import Price
+
+
+class TimeResolution(str, Enum):
+    day = 'day'
+    week = 'week'
+    month = 'month'
 
 
 class DataFeed(ABC):
@@ -13,13 +20,16 @@ class DataFeed(ABC):
     """
 
     @abstractmethod
-    def retrieve_bars(self, source_id: str, instrument_type: Optional[str] = None) -> BarSet:
+    def retrieve_bars(
+        self, source_id: str, *, resolution: TimeResolution = TimeResolution.day, instrument_type: Optional[str] = None
+    ) -> BarSet:
         """
         Retrieves bars. For now, very simple implementation and not flexible at all
         (in terms of time range and periodicity).
 
 
         :param source_id: the ID for the asset in the source
+        :param resolution: the time resolution (day, week, month)
         :param instrument_type: the type of instrument
         :return: a BarSet
         """
