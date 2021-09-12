@@ -136,6 +136,26 @@ With this:
 =VALUE(ImportJSON(CONCATENATE("https://<HOST>/price/", A3, ":", C3), "/change_pct", "noHeaders"))/100
 ```
 
+## Trailing stop loss
+
+Calculates a trailing stop loss based on the Average True Range (ATR) indicator. I use this stop loss both for position
+sizing and for calculating my exit point for my positions. Automating it here is my first step towards having this
+project automatically update my stop losses in the brokers I use. Also exposed as an HTTP endpoint to be easily embedded
+into Google Sheets.
+
+This graph below was generated from one of the [example files](examples/average_true_range_trailing_stop.ipynb) (Jupyter
+notebook).
+
+<p align="center">
+    <a href="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/stop_loss_atr.png">
+        <img 
+          src="https://github.com/fernandobrito/investments-toolkit/blob/main/docs/stop_loss_atr.png?raw=true" 
+          alt="Trailing stop loss"
+          width="600px"
+        />
+    </a>
+</p>
+
 ## Technical indicators
 
 ### Average True Range
@@ -144,9 +164,6 @@ With this:
 > Jr. [...] (it) is a market volatility indicator.
 
 Source: [Investopedia](https://www.investopedia.com/terms/a/atr.asp)
-
-I use this indicator both for position sizing and for calculating my trailing stop losses. Automating it here is my
-first step towards having this project automatically update my stop losses in the brokers I use.
 
 ---
 
