@@ -1,13 +1,13 @@
 from typing import Sequence, Any
 
 import numpy as np
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objs as go
 import scipy.cluster.hierarchy as sch
-from pandas import DataFrame
-from plotly.graph_objs import Figure
 
 
-def generate_binned_figure(dataframe: DataFrame, **kwargs) -> Figure:
+def generate_binned_figure(dataframe: pd.DataFrame, **kwargs) -> go.Figure:
     """
     High-level function to generate a binned correlation matrix Plotly figure.
     The values are only binned for the colorscale (i.e.: the data in the dataframe is not modified).
@@ -27,22 +27,12 @@ def generate_binned_figure(dataframe: DataFrame, **kwargs) -> Figure:
     return figure
 
 
-def generate_figure(dataframe: DataFrame, **kwargs) -> Figure:
+def generate_figure(dataframe: pd.DataFrame, **kwargs) -> go.Figure:
     """
     References:
     * https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
     """
     return px.imshow(dataframe, zmin=-1, zmax=1, color_continuous_scale=px.colors.diverging.RdBu, **kwargs)
-
-
-def show_figure(figure: Figure, *, interactive: bool = True):
-    """
-    Enables figures to be displayed interactively or statically.
-    """
-    if interactive:
-        figure.show()
-    else:
-        figure.show("png")
 
 
 def discrete_colorscale(boundaries: Sequence[float], colors: Sequence[str]) -> list[list[Any]]:
@@ -82,7 +72,7 @@ def discrete_colorscale(boundaries: Sequence[float], colors: Sequence[str]) -> l
     return colorscale
 
 
-def cluster_by_correlation(dataframe: DataFrame) -> DataFrame:
+def cluster_by_correlation(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Reorders a dataframe grouping/clustering highly clustered rows together.
 

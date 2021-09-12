@@ -6,12 +6,14 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from pandas import DataFrame
 
+from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.figures import correlation
 from investmentstk.figures.correlation import cluster_by_correlation
+from investmentstk.formulas.average_true_range import average_true_range_trailing_stop
 from investmentstk.models.asset import Asset
-from investmentstk.models.barset import barset_to_single_column_dataframe
+from investmentstk.models.barset import barset_to_single_column_dataframe, barset_to_ohlc_dataframe
 from investmentstk.models.price import Price
-from investmentstk.models.source import build_data_feed_from_source
+from investmentstk.models.source import build_data_feed_from_source, Source
 from investmentstk.utils.dataframe import convert_to_pct_change, merge_dataframes
 
 app = FastAPI()
@@ -39,6 +41,35 @@ async def price(fqn_id: str) -> Price:
     source, source_id = Asset.parse_fqn_id(fqn_id)
     source_client = build_data_feed_from_source(source)
     return source_client.retrieve_price(source_id)
+
+
+@app.get("/stop_loss_atr/{fqn_id}")
+async def stop_loss_atr(fqn_id: str) -> float:
+    """
+    Returns the ATR
+
+    :param fqn_id:
+    :return:
+    """
+
+    # TODO: Very specific to my trade system
+    # Consider moving the default time resolution to a configuration file
+
+    asset = Asset.from_id(fqn_id)
+
+    if asset.source == Source.CMC:
+        multiplier = 3.0
+        resolution = TimeResolution.week
+    else:
+        multiplier = 2.5
+        resolution = TimeResolution.month
+
+    barset = asset.retrieve_bars(resolution=resolution)
+    dataframe = barset_to_ohlc_dataframe(barset)
+    stop_loss = average_true_range_trailing_stop(dataframe, periods=21, multiplier=multiplier)
+
+    # Return latest closed bar
+    return stop_loss["stop"][-2]
 
 
 @app.get("/correlations")
@@ -110,7 +141,7 @@ def _prepare_dataframe(portfolio: Iterable[Asset]) -> DataFrame:
     dataframes = []
 
     for asset in portfolio:
-        bars = asset.retrieve_prices()
+        bars = asset.retrieve_bars()
         dataframe = barset_to_single_column_dataframe(bars, asset)
         dataframes.append(dataframe)
 

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Mapping
 
+from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.models.barset import BarSet
 from investmentstk.models.source import Source, build_data_feed_from_source
 from investmentstk.persistence import asset_cache
@@ -47,9 +48,9 @@ class Asset:
 
             return asset
 
-    def retrieve_prices(self) -> BarSet:
+    def retrieve_bars(self, resolution: TimeResolution = TimeResolution.day) -> BarSet:
         client = build_data_feed_from_source(self.source)
-        return client.retrieve_bars(self.source_id)
+        return client.retrieve_bars(self.source_id, resolution=resolution)
 
     def to_dict(self) -> dict:
         return dict(source=self.source.name, source_id=self.source_id, name=self.name)

@@ -1,3 +1,4 @@
+from operator import attrgetter
 from typing import Set
 
 import pandas as pd
@@ -7,7 +8,7 @@ from investmentstk.models.bar import Bar
 BarSet = Set[Bar]
 
 
-def barset_from_csv_string(csv_string) -> BarSet:
+def barset_from_csv_string(csv_string: str) -> BarSet:
     """
     Expected format:
     date,open,high,low,close
@@ -19,8 +20,8 @@ def barset_from_csv_string(csv_string) -> BarSet:
     rows = csv_string.strip().split("\n")
 
     for row in rows:
-        time, open, high, low, close = row.split(",")
-        bar = Bar(time=time.strip(), open=open.strip(), high=high.strip(), low=low.strip(), close=close.strip())
+        time, open, high, low, close = [value.strip() for value in row.split(",")]
+        bar = Bar(time=time, open=open, high=high, low=low, close=close)  # type: ignore
         barset.add(bar)
 
     return barset
@@ -57,3 +58,7 @@ def barset_to_single_column_dataframe(barset: BarSet, asset, column: str = "clos
     df = df.sort_index()
 
     return df
+
+
+def barset_to_sorted_list(barset: BarSet) -> list[Bar]:
+    return sorted(list(barset), key=attrgetter("time"))

@@ -2,11 +2,23 @@ from typing import Optional
 
 import requests
 
-from investmentstk.data_feeds.data_feed import DataFeed
+from investmentstk.data_feeds.data_feed import DataFeed, TimeResolution
 from investmentstk.models.bar import Bar
 from investmentstk.models.barset import BarSet
 from investmentstk.models.price import Price
 from investmentstk.persistence.requests_cache import requests_cache_configured
+
+TIME_RESOLUTION_TO_AVANZA_API_RESOLUTION_MAP = {
+    TimeResolution.day: "day",
+    TimeResolution.week: "week",
+    TimeResolution.month: "month",
+}
+
+TIME_RESOLUTION_TO_AVANZA_API_TIME_RANGE_MAP = {
+    TimeResolution.day: "one_year",
+    TimeResolution.week: "three_years",
+    TimeResolution.month: "infinity",
+}
 
 
 class AvanzaClient(DataFeed):
@@ -19,7 +31,13 @@ class AvanzaClient(DataFeed):
     """
 
     @requests_cache_configured()
-    def retrieve_bars(self, source_id: str, instrument_type: Optional[str] = "stock") -> BarSet:
+    def retrieve_bars(
+        self,
+        source_id: str,
+        *,
+        resolution: TimeResolution = TimeResolution.day,
+        instrument_type: Optional[str] = "stock",
+    ) -> BarSet:
         """
         Uses the same public API used by their public price page.
         Example: https://www.avanza.se/aktier/om-aktien.html/5269/volvo-b
@@ -30,7 +48,10 @@ class AvanzaClient(DataFeed):
         """
         response = requests.get(
             f"https://www.avanza.se/_api/price-chart/{instrument_type}/{source_id}",
-            params={"timePeriod": "one_year", "resolution": "day"},
+            params={
+                "timePeriod": TIME_RESOLUTION_TO_AVANZA_API_TIME_RANGE_MAP[resolution],
+                "resolution": TIME_RESOLUTION_TO_AVANZA_API_RESOLUTION_MAP[resolution],
+            },
         )
         response.raise_for_status()
 

@@ -3,7 +3,7 @@ from typing import ClassVar, Optional
 
 import requests
 
-from investmentstk.data_feeds.data_feed import DataFeed
+from investmentstk.data_feeds.data_feed import DataFeed, TimeResolution
 from investmentstk.models.bar import Bar
 from investmentstk.models.barset import BarSet
 from investmentstk.models.price import Price
@@ -19,21 +19,33 @@ class CMCClient(DataFeed):
     API_KEY: ClassVar[str] = os.environ["CMC_API_KEY"]
 
     @requests_cache_configured()
-    def retrieve_bars(self, source_id: str, instrument_type: Optional[str] = None) -> BarSet:
+    def retrieve_bars(
+        self, source_id: str, *, resolution: TimeResolution = TimeResolution.day, instrument_type: Optional[str] = None
+    ) -> BarSet:
         """
         Uses the same public API used by their public price page.
         Example: https://www.cmcmarkets.com/en-gb/instruments/sugar-raw-cash
 
         For daily interval, the maximum allowed number of months is 6.
 
+
         :param source_id:
         :param instrument_type:
         :return:
         """
-        response = requests.get(
-            f"https://oaf.cmcmarkets.com/instruments/prices/{source_id}/MONTH/6",
-            params={"key": self.API_KEY},
-        )
+        if resolution == TimeResolution.day:
+            response = requests.get(
+                f"https://oaf.cmcmarkets.com/instruments/prices/{source_id}/MONTH/6",
+                params={"key": self.API_KEY},
+            )
+        elif resolution == TimeResolution.week:
+            response = requests.get(
+                f"https://oaf.cmcmarkets.com/instruments/prices/{source_id}/YEAR/2",
+                params={"key": self.API_KEY},
+            )
+        else:
+            raise ValueError(f"{resolution} resolution not supported for {self.__class__.__name__} source")
+
         response.raise_for_status()
 
         bars: BarSet = set()
