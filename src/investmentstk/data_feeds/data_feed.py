@@ -7,9 +7,9 @@ from investmentstk.models.price import Price
 
 
 class TimeResolution(str, Enum):
-    day = 'day'
-    week = 'week'
-    month = 'month'
+    day = "day"
+    week = "week"
+    month = "month"
 
 
 class DataFeed(ABC):

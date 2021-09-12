@@ -48,7 +48,7 @@ class Asset:
 
             return asset
 
-    def retrieve_prices(self, resolution: TimeResolution = TimeResolution.day) -> BarSet:
+    def retrieve_bars(self, resolution: TimeResolution = TimeResolution.day) -> BarSet:
         client = build_data_feed_from_source(self.source)
         return client.retrieve_bars(self.source_id, resolution=resolution)
 

@@ -13,7 +13,7 @@ from investmentstk.formulas.average_true_range import average_true_range_trailin
 from investmentstk.models.asset import Asset
 from investmentstk.models.barset import barset_to_single_column_dataframe, barset_to_ohlc_dataframe
 from investmentstk.models.price import Price
-from investmentstk.models.source import build_data_feed_from_source
+from investmentstk.models.source import build_data_feed_from_source, Source
 from investmentstk.utils.dataframe import convert_to_pct_change, merge_dataframes
 
 app = FastAPI()
@@ -43,8 +43,8 @@ async def price(fqn_id: str) -> Price:
     return source_client.retrieve_price(source_id)
 
 
-@app.get("/atr_stop_loss/{fqn_id}")
-async def atr_stop_loss(fqn_id: str, resolution: TimeResolution = TimeResolution.day) -> float:
+@app.get("/stop_loss_atr/{fqn_id}")
+async def stop_loss_atr(fqn_id: str) -> float:
     """
     Returns the ATR
 
@@ -56,11 +56,20 @@ async def atr_stop_loss(fqn_id: str, resolution: TimeResolution = TimeResolution
     # Consider moving the default time resolution to a configuration file
 
     asset = Asset.from_id(fqn_id)
-    barset = asset.retrieve_prices(resolution=resolution)
-    dataframe = barset_to_ohlc_dataframe(barset)
-    stop_loss = average_true_range_trailing_stop(dataframe, periods=21, multiplier=2.5)
 
-    return stop_loss['stop'][-1]
+    if asset.source == Source.CMC:
+        multiplier = 3.0
+        resolution = TimeResolution.week
+    else:
+        multiplier = 2.5
+        resolution = TimeResolution.month
+
+    barset = asset.retrieve_bars(resolution=resolution)
+    dataframe = barset_to_ohlc_dataframe(barset)
+    stop_loss = average_true_range_trailing_stop(dataframe, periods=21, multiplier=multiplier)
+
+    # Return latest closed bar
+    return stop_loss["stop"][-2]
 
 
 @app.get("/correlations")
@@ -132,7 +141,7 @@ def _prepare_dataframe(portfolio: Iterable[Asset]) -> DataFrame:
     dataframes = []
 
     for asset in portfolio:
-        bars = asset.retrieve_prices()
+        bars = asset.retrieve_bars()
         dataframe = barset_to_single_column_dataframe(bars, asset)
         dataframes.append(dataframe)
 
