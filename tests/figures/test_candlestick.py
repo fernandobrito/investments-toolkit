@@ -17,4 +17,4 @@ def test_date_gaps():
 
     result = date_gaps(dataframe)
 
-    assert result == [date(2021, 7, 3), date(2021, 7, 4)]
+    assert result == {date(2021, 7, 3), date(2021, 7, 4)}

@@ -22,7 +22,7 @@ def generate_figure(dataframe: pd.DataFrame, asset: Asset) -> go.Figure:
     figure.update_layout(title="Candlestick chart")
 
     if "stop" in dataframe.columns:
-        figure.update_xaxes(rangebreaks=[dict(values=date_gaps(dataframe))])
+        figure.update_xaxes(rangebreaks=[dict(values=list(date_gaps(dataframe)))])
 
         # Plotly doesn't support one line chart with multiple colors. The recommended solution
         # is to have 2 different traces.
@@ -52,7 +52,7 @@ def generate_figure(dataframe: pd.DataFrame, asset: Asset) -> go.Figure:
     return figure
 
 
-def date_gaps(dataframe: pd.DataFrame, resolution: TimeResolution = TimeResolution.day) -> list[date]:
+def date_gaps(dataframe: pd.DataFrame, resolution: TimeResolution = TimeResolution.day) -> set[date]:
     """
     When plotting candlestick graphs on Plotly, weekends and holidays (days without bars) are shown as
     gaps in the chart. The recommended approach is to list them as "rangebreaks" in Plotly.
@@ -70,4 +70,4 @@ def date_gaps(dataframe: pd.DataFrame, resolution: TimeResolution = TimeResoluti
     # Create a set with all dates between
     all_dates = {start_date + timedelta(days=index) for index in range((end_date - start_date).days + 1)}
 
-    return list(all_dates - set(dataframe.index))
+    return all_dates - set(dataframe.index)
