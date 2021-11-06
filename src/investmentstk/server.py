@@ -26,11 +26,16 @@ class OutputFormat(str, Enum):
 
 @app.get("/")
 async def root():
+    """
+    Useful for health checks
+
+    :return: a simple static JSON object
+    """
     return {"status": "ok"}
 
 
 @app.get("/price/{fqn_id}")
-async def price(fqn_id: str) -> Price:
+def price(fqn_id: str) -> Price:
     """
     Returns price details (last price, % chance) of a given asset
 
@@ -38,42 +43,81 @@ async def price(fqn_id: str) -> Price:
     :return: a Price object
     """
 
-    source, source_id = Asset.parse_fqn_id(fqn_id)
+    return _price_common(fqn_id)
+
+
+@app.get("/price_bulk")
+def price_bulk(p: str) -> list:
+    assets_fqn = _parse_input_list(p)
+    output = []
+
+    for asset_fqn in assets_fqn:
+        try:
+            asset_data = {"fqn_id": asset_fqn}
+
+            price = _price_common(asset_fqn)
+            asset_data.update(**dataclasses.asdict(price))
+
+            output.append(asset_data)
+        except json.JSONDecodeError as e:
+            source, _ = Asset.parse_fqn_id(asset_fqn)
+            logger.error(
+                f"Exception raised. {type(e).__name__}: {e}", asset_id=asset_fqn, source=source, error=type(e).__name__
+            )
+
+    return output
+
+
+def _price_common(asset_fqn: str) -> Price:
+    source, source_id = Asset.parse_fqn_id(asset_fqn)
     source_client = build_data_feed_from_source(source)
     return source_client.retrieve_price(source_id)
 
 
 @app.get("/stop_loss_atr/{fqn_id}")
-async def stop_loss_atr(fqn_id: str) -> float:
+def stop_loss_atr(fqn_id: str) -> float:
     """
-    Returns the ATR
+    Returns the stop loss calculated using an ATR trailing stop
 
-    :param fqn_id:
-    :return:
+    :param fqn_id: example: AV:XXXXXX
+    :return: the stop loss price
     """
 
-    # TODO: Very specific to my trade system
-    # Consider moving the default time resolution to a configuration file
+    return _stop_loss_atr_common(fqn_id)
 
-    asset = Asset.from_id(fqn_id)
 
-    if asset.source == Source.CMC:
-        multiplier = 3.0
-        resolution = TimeResolution.week
-    else:
-        multiplier = 2.5
-        resolution = TimeResolution.month
+@app.get("/stop_loss_atr_bulk")
+def stop_loss_atr_bulk(p: str) -> list:
+    assets_fqn = _parse_input_list(p)
+    output = []
 
-    barset = asset.retrieve_bars(resolution=resolution)
-    dataframe = barset_to_ohlc_dataframe(barset)
-    stop_loss = average_true_range_trailing_stop(dataframe, periods=21, multiplier=multiplier)
+    for asset_fqn in assets_fqn:
+        try:
+            asset_data = {"fqn_id": asset_fqn}
+            asset_data["stop_loss_atr"] = _stop_loss_atr_common(asset_fqn)
+
+            output.append(asset_data)
+        except (json.JSONDecodeError, requests.exceptions.HTTPError) as e:
+            source, _ = Asset.parse_fqn_id(asset_fqn)
+            logger.error(
+                f"Exception raised. {type(e).__name__}: {e}", asset_id=asset_fqn, source=source, error=type(e).__name__
+            )
+
+    return output
+
+
+def _stop_loss_atr_common(asset_fqn: str):
+    asset = Asset.from_id(asset_fqn)
+    stop_loss = atr_stop_loss_from_asset(asset)
 
     # Return latest closed bar
-    return stop_loss["stop"][-2]
+    return stop_loss["stop"][-1]
+
+
 
 
 @app.get("/correlations")
-async def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
+def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
     """
     Calculates a clustered correlation matrix of assets provided in the portfolio (`p` parameter).
     If a list of external assets is provided (`e` parameter), after the clustering is done, it appends
@@ -89,10 +133,10 @@ async def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
     :param e: optional CSV of "extra" assets
     :param f: output format. Either "g" for Graph (standalone HTML page with Plotly graph) or "csv" for plain
     text with CSV
-    :return:
+    :return: either a CSV with the raw correlations or a HTML page with the Plotly graph
     """
-    portfolio: list[Asset] = _parse_input_list(p)
-    external: list[Asset] = _parse_input_list(e)
+    portfolio: list[Asset] = _input_list_to_assets(p)
+    external: list[Asset] = _input_list_to_assets(e)
 
     # Prepare portfolio dataframe
     dataframe = _prepare_dataframe(portfolio)
@@ -101,9 +145,9 @@ async def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
 
     # Prepare and merge interest dataframe
     if external:
-        interest_df = _prepare_dataframe(external)
-        interest_df = convert_to_pct_change(interest_df)
-        clustered_dataframe = merge_dataframes([clustered_dataframe, interest_df])
+        external_df = _prepare_dataframe(external)
+        external_df = convert_to_pct_change(external_df)
+        clustered_dataframe = merge_dataframes([clustered_dataframe, external_df])
 
     clustered_df_corr = clustered_dataframe.corr()
 
@@ -111,11 +155,19 @@ async def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
     return _format_output(clustered_df_corr, f)
 
 
-def _parse_input_list(input_list: str) -> list[Asset]:
+def _parse_input_list(input_list: str) -> list[str]:
+    """
+    Converts a CSV list of assets IDs into a list of parsed IDs (but not Asset objects)
+    """
+    return [fqn_id for fqn_id in input_list.split(",") if fqn_id != "" and fqn_id != ":"]
+
+
+def _input_list_to_assets(input_list: str) -> list[Asset]:
     """
     Converts a CSV list of asset IDs into Asset objects
     """
-    return [Asset.from_id(fqn_id) for fqn_id in input_list.split(",") if fqn_id != "" and fqn_id != ":"]
+    parsed_input = _parse_input_list(input_list)
+    return [Asset.from_id(fqn_id) for fqn_id in parsed_input]
 
 
 def _format_output(dataframe: DataFrame, format: OutputFormat) -> Union[PlainTextResponse, HTMLResponse]:

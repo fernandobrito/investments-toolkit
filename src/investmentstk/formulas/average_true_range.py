@@ -34,13 +34,23 @@ SSMA. The EMA felt too fast. Example: on the start of trends, SSMA gave me a lar
 and after a long and strong in the trend, SSMA gave me tighter stops.
 
 """
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
+from investmentstk.data_feeds.data_feed import TimeResolution
+from investmentstk.models.asset import Asset
+from investmentstk.models.barset import barset_to_ohlc_dataframe
+from investmentstk.models.source import Source
+from investmentstk.utils.calendar import is_weekend, days_to_next_month
+
 
 def average_true_range(dataframe: DataFrame, periods: int = 14) -> pd.Series:
     """
+    Calculates the ATR.
+
     See the documentation above for more information about the ATR indicator.
 
     Python implementations:
@@ -54,18 +64,23 @@ def average_true_range(dataframe: DataFrame, periods: int = 14) -> pd.Series:
     ranges = pd.concat([high_low, high_close, low_close], axis=1)
     true_range = np.max(ranges, axis=1)
 
-    # TODO: I didn't bother parametizing this as I will always use SSMA
+    # TODO: I didn't bother parametrizing this as I will always use SSMA
+    # Not 100% sure what adjust means. When True, it matches CMC sources. For Avanza,
+    # it doesn't make much of a difference.
+    # For best results with CMC and Trading View:
+    # adjust=True, ignore_na=True
+
     # For SMA:  .rolling(periods).sum() / periods
     # For EMA:  .ewm(periods).mean()
     # For SSMA: .ewm(alpha=1 / periods, min_periods=periods, adjust=False).mean()
-    atr = true_range.ewm(alpha=1 / periods, min_periods=periods, adjust=False).mean()
+    atr = true_range.ewm(alpha=1 / periods, min_periods=periods, adjust=True, ignore_na=True).mean()
 
     return atr
 
 
 def average_true_range_trailing_stop(dataframe: pd.DataFrame, periods: int = 14, multiplier: float = 3) -> pd.DataFrame:
     """
-    Uses the ATR as a trailing stop.
+    Calculates a trailing stop using the ATR formula.
     If on "long" mode, never moves the stop down, and if on "short" mode, never move the stop up.
 
     Returns a copy of the original dataframe with extra columns (atr, stop_distance, stop).
@@ -115,3 +130,38 @@ def average_true_range_trailing_stop(dataframe: pd.DataFrame, periods: int = 14,
         dataframe.at[index_df, "stop"] = new_stop
 
     return dataframe
+
+
+def atr_stop_loss_from_asset(asset: Asset) -> pd.DataFrame:
+    """
+    Convenience function to calculate the ATR stop loss from an asset.
+
+    Retrieves the barset with the appropriate resolution depending on the source
+    and excludes the current bar if it's not the end of the week/month.
+
+    :return: a BarSet dataframe with the ATR and ATR stop loss
+    """
+
+    now = datetime.utcnow()
+
+    # TODO: Very specific to my trade system
+    # Consider moving the default time resolution to a configuration file
+
+    if asset.source == Source.CMC:
+        multiplier = 3.0
+        resolution = TimeResolution.week
+
+        # If it's a weekend, take the current bar. Otherwise, the one before
+        offset = None if is_weekend(now) else -1
+    else:
+        multiplier = 2.5
+        resolution = TimeResolution.month
+
+        # If it's the last 2 days of the month and a weekend, take the current bar.
+        # Otherwise, the one before
+        offset = None if is_weekend(now) and days_to_next_month(now) <= 2 else -1
+
+    barset = asset.retrieve_bars(resolution=resolution)
+    dataframe = barset_to_ohlc_dataframe(barset)
+    dataframe = average_true_range_trailing_stop(dataframe, periods=21, multiplier=multiplier)
+    return dataframe[0:offset]
