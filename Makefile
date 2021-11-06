@@ -62,6 +62,10 @@ deploy-cloud-run:
 		--region=europe-west3 \
 		--min-instances=0 \
 		--max-instances=1 \
-		--service-account=$(SERVICE_ACCOUNT) \
+		--service-account=$(GCP_SERVICE_ACCOUNT_EMAIL) \
 		--allow-unauthenticated \
+		--concurrency 160 \
 		--verbosity debug
+
+.PHONY: deploy
+deploy: push deploy-cloud-run
