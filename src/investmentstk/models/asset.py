@@ -5,7 +5,7 @@ from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.models.barset import BarSet
 from investmentstk.models.source import Source, build_data_feed_from_source
 from investmentstk.persistence import asset_cache
-from investmentstk.utils.logger import get_logger
+from investmentstk.utils.logger import get_logger, logger_autobind_from_args
 
 logger = get_logger()
 
@@ -25,21 +25,22 @@ class Asset:
         return f"{self.source.value}:{self.source_id}"
 
     @classmethod
+    @logger_autobind_from_args(asset_id="fqn_id")
     def from_id(cls, fqn_id: str) -> "Asset":
         # Parse the fqn id
         source, source_id = cls.parse_fqn_id(fqn_id)
 
-        logger.info(f"[Asset] Creating asset from ID: {fqn_id}")
+        logger.info("Initializing")
 
         # Look at the cache, which is lazily loaded
         cache = asset_cache.AssetCache()
         cached_asset = cache.retrieve(fqn_id)
 
         if cached_asset:
-            logger.debug("[Asset] Found in local cache")
+            logger.debug("Found in local cache")
             return cached_asset
         else:
-            logger.debug("[Asset] Not found in cache. Retrieving from the source and adding to the remote cache")
+            logger.debug("Not found in cache. Retrieving from the source and adding to the remote cache")
             client = build_data_feed_from_source(source)
             name = client.retrieve_asset_name(source_id)
 

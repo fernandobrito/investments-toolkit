@@ -29,12 +29,19 @@ setup(
         "fastapi[all] ~= 0.68.1",
         "google-cloud-firestore ~= 2.3.0",
         "requests ~= 2.26.0",
-        "requests-cache[json] @ git+https://github.com/reclosedev/requests-cache",
+        "requests-cache[json] ~= 0.8.0",
         "pandas ~= 1.3.2",
         "scipy ~= 1.7.1",
         "numpy ~= 1.21.2",
         "plotly ~= 5.2.1",
         "kaleido ~= 0.2.1",
-        "python-dotenv ~= 0.19.0"
+        "python-dotenv ~= 0.19.0",
+        "pydantic ~= 1.8.2",
+        # "avanza-api ~= 2.8.0",
+        "avanza-api @ git+https://github.com/fernandobrito/avanza@retrieve-stop-loss",
+        "structlog ~= 21.2.0",
+        "rich ~= 10.12.0",
+        "papermill ~= 2.3.3",
+        "nbconvert ~= 6.2.0"
     ]
 )

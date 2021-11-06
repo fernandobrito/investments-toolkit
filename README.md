@@ -25,14 +25,16 @@ source code.
 
 * Caches the results of HTTP requests locally (file system backend
   from [requests-cache](https://github.com/reclosedev/requests-cache)). Useful for local development
-* Caches assets metadata and price history remotely ([Google Firestore](https://cloud.google.com/firestore)). Useful for
-  production deployments
+* Caches assets metadata remotely ([Google Firestore](https://cloud.google.com/firestore)). Useful for production
+  deployments
 * Exposes some of the graphs through HTTP ([FastAPI](https://fastapi.tiangolo.com/)). Useful for creating links from my
   Google Sheets
 * Exposes some of the raw outputs as CSV through HTTP (FastAPI). Useful for embedding the results in Google Sheets
 * Containerized as a Docker image and ready to be deployed in the
   cloud ([Google Cloud Run](https://cloud.google.com/run))
 * Interactive graphs ([Plotly](https://github.com/plotly/plotly.py))
+* Structured logs when running on production and human-friendly logs when running on
+  development ([structlog](https://github.com/hynek/structlog))
 
 ## Portfolio correlation
 
@@ -177,17 +179,22 @@ minimalist) clients are implemented:
 * [Avanza](https://www.avanza.se): a Swedish broker
 * [CMC Markets](https://www.cmcmarkets.com/sv-se/): an international CFD broker
 
-### Persistence
+### Figures
 
-Clients to interact with Google Firestore and for setting up HTTP requests local cache.
+Utilities to abstract the boilerplate on plotting figures, such as the correlation matrix or the candlestick chart with
+the trailing stop loss.
+
+### Formulas
+
+A module to hold formulas, such as the calculation of technical indicators.
 
 ### Models
 
 Python classes to represent assets, price bars and data sources.
 
-### Formulas
+### Persistence
 
-A module to hold formulas, such as the calculation of technical indicators.
+Clients to interact with Google Firestore and for setting up HTTP requests local cache.
 
 ## Deployment
 
