@@ -1,23 +1,36 @@
+import dataclasses
+import json
+import os
 from enum import Enum
-from tempfile import SpooledTemporaryFile
+from pathlib import Path
+from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 from typing import Iterable, Union
 
+import nbformat
+import papermill
+import requests.exceptions
 from avanza import Avanza
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
+from nbconvert import HTMLExporter
 from pandas import DataFrame
 
-from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.figures import correlation
 from investmentstk.figures.correlation import cluster_by_correlation
-from investmentstk.formulas.average_true_range import average_true_range_trailing_stop
+from investmentstk.formulas.average_true_range import atr_stop_loss_from_asset
 from investmentstk.models.asset import Asset
-from investmentstk.models.barset import barset_to_single_column_dataframe, barset_to_ohlc_dataframe
+from investmentstk.models.barset import barset_to_single_column_dataframe
 from investmentstk.models.price import Price
-from investmentstk.models.source import build_data_feed_from_source, Source
+from investmentstk.models.source import build_data_feed_from_source
+from investmentstk.persistence.requests_cache import requests_cache_configured
 from investmentstk.utils.dataframe import convert_to_pct_change, merge_dataframes
+from investmentstk.utils.logger import get_logger
 
 app = FastAPI()
+
+current_folder = Path(__file__).resolve().parent
+
+logger = get_logger()
 
 
 class OutputFormat(str, Enum):
@@ -152,6 +165,38 @@ def _stop_loss_atr_common(asset_fqn: str):
     return stop_loss["stop"][-1]
 
 
+@app.get("/stop_losses_report")
+def stop_losses_report(p: str):
+    """
+    Generates a HTML report with stop losses for all the assets provided.
+
+    :param p: CSV of assets in the portfolio, in the format AV:XXXX,AV:YYYY,CMC:ZZZZ
+    :return:
+    """
+    template_path = current_folder / "examples" / "average_true_range_trailing_stop.ipynb"
+
+    assets_fqn = _parse_input_list(p)
+
+    with NamedTemporaryFile(mode="w+") as temp_file:
+        # Use the given list of assets as a parameter in the notebook
+        papermill.execute_notebook(
+            template_path,
+            temp_file.name,
+            progress_bar=False,
+            parameters=dict(assets=assets_fqn),
+            report_mode=True,  # Add metadata to input cells
+        )
+
+        # Hide cells that have the metadata setted above
+        HTMLExporter.exclude_input = True
+        HTMLExporter.exclude_markdown = True
+        html_exporter = HTMLExporter(template_name="classic")
+
+        # Export the notebook as HTML
+        notebook = nbformat.read(temp_file, as_version=4)
+        (body, resources) = html_exporter.from_notebook_node(notebook)
+
+        return HTMLResponse(body)
 
 
 @app.get("/correlations")

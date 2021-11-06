@@ -63,7 +63,9 @@ def prefix_logger_name_on_message(_: WrappedLogger, __: str, event_dict: EventDi
     """
     logger_name = event_dict.pop("logger", "None")
 
-    event_dict["event"] = f'[{logger_name.split(".")[-1]}] ' + event_dict["event"]
+    if isinstance(event_dict["event"], str):
+        event_dict["event"] = f'[{logger_name.split(".")[-1]}] ' + event_dict["event"]
+
     return event_dict
 
 
