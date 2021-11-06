@@ -2,6 +2,7 @@ from enum import Enum
 from tempfile import SpooledTemporaryFile
 from typing import Iterable, Union
 
+from avanza import Avanza
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from pandas import DataFrame
@@ -72,6 +73,43 @@ def _price_common(asset_fqn: str) -> Price:
     source, source_id = Asset.parse_fqn_id(asset_fqn)
     source_client = build_data_feed_from_source(source)
     return source_client.retrieve_price(source_id)
+
+
+@app.get("/stop_losses_broker")
+def stop_losses_broker(skip_cache: bool = False) -> list:
+    """
+    Returns all current stop losses in the supported brokers.
+
+    :return: JSON object with fqn_id's and the stop loss price
+    """
+    credentials = json.loads(os.environ["AVANZA_CREDENTIALS"])
+
+    # 1/20 = 3 minutes, as too many hits on the Avanza authentication
+    # API will start failing and they actually block your password authentication
+    # for 5 minutes
+    hours_cache = 1 / 20 if skip_cache else 1
+
+    with requests_cache_configured(
+        hours=hours_cache, allowable_methods=["GET", "HEAD", "POST"], ignored_parameters=["totpCode"]
+    ):
+        avanza = Avanza(
+            {
+                "username": credentials["username"],
+                "password": credentials["password"],
+                "totpSecret": credentials["totpSecret"],
+            }
+        )
+
+    output = []
+
+    for stop_loss in avanza.get_all_stop_losses():
+        asset_fqn = "AV:" + stop_loss["orderbook"]["id"]
+        trigger = stop_loss["trigger"]["value"]
+        valid_until = stop_loss["trigger"]["validUntil"]
+
+        output.append({"asset_fqn": asset_fqn, "stop_loss_trigger": trigger, "stop_loss_valid_until": valid_until})
+
+    return output
 
 
 @app.get("/stop_loss_atr/{fqn_id}")
