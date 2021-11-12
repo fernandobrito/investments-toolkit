@@ -33,12 +33,17 @@ lint:
 .PHONY: test
 test:
 	@echo "Running pytest"
+	@pipenv run pytest -m "not manual"
+
+.PHONY: test-all
+test-all:
+	@echo "Running pytest"
 	@pipenv run pytest
 
 .PHONY: test-coverage
 test-coverage:
 	@echo "Running pytest (with coverage)"
-	@pipenv run pytest --cov --cov-report=xml
+	@pipenv run pytest -m "not manual" --cov --cov-report=xml
 
 
 #######################
@@ -61,7 +66,11 @@ deploy-cloud-run:
 		--image=$(IMAGE):latest \
 		--region=europe-west3 \
 		--min-instances=0 \
-		--max-instances=1 \
-		--service-account=$(SERVICE_ACCOUNT) \
+		--max-instances=2 \
+		--service-account=$(GCP_SERVICE_ACCOUNT_EMAIL) \
 		--allow-unauthenticated \
+		--concurrency 160 \
 		--verbosity debug
+
+.PHONY: deploy
+deploy: push deploy-cloud-run

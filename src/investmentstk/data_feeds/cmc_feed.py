@@ -10,7 +10,7 @@ from investmentstk.models.price import Price
 from investmentstk.persistence.requests_cache import requests_cache_configured
 
 
-class CMCClient(DataFeed):
+class CMCFeed(DataFeed):
     """
     A client to retrieve data from CMC Markets
     """
@@ -19,7 +19,7 @@ class CMCClient(DataFeed):
     API_KEY: ClassVar[str] = os.environ["CMC_API_KEY"]
 
     @requests_cache_configured()
-    def retrieve_bars(
+    def _retrieve_bars(
         self, source_id: str, *, resolution: TimeResolution = TimeResolution.day, instrument_type: Optional[str] = None
     ) -> BarSet:
         """
@@ -27,11 +27,6 @@ class CMCClient(DataFeed):
         Example: https://www.cmcmarkets.com/en-gb/instruments/sugar-raw-cash
 
         For daily interval, the maximum allowed number of months is 6.
-
-
-        :param source_id:
-        :param instrument_type:
-        :return:
         """
         if resolution == TimeResolution.day:
             response = requests.get(
@@ -57,7 +52,7 @@ class CMCClient(DataFeed):
         return bars
 
     @requests_cache_configured()
-    def retrieve_asset_name(self, source_id: str, instrument_type: Optional[str] = "stock") -> str:
+    def retrieve_asset_name(self, source_id: str, instrument_type: Optional[str] = None) -> str:
         response = requests.get(
             f"https://oaf.cmcmarkets.com/json/instruments/{source_id}_gb.json",
             params={"key": self.API_KEY},
@@ -66,8 +61,7 @@ class CMCClient(DataFeed):
 
         return response.json()["name"]
 
-    @requests_cache_configured(hours=0.5)
-    def retrieve_price(self, source_id: str, instrument_type: Optional[str] = "stock") -> Price:
+    def retrieve_price(self, source_id: str, instrument_type: Optional[str] = None) -> Price:
         response = requests.get(
             f"https://oaf.cmcmarkets.com//instruments/price/{source_id}",
             params={"key": self.API_KEY},

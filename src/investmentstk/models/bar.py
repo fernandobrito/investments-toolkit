@@ -1,5 +1,5 @@
-from datetime import datetime, time
-from typing import Mapping
+from datetime import datetime, time, timedelta
+from typing import Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 import pydantic
@@ -43,9 +43,9 @@ class Bar:
         return cls(
             time=datetime.fromtimestamp(ohlc["timestamp"] / 1000, tz=local_tz).replace(tzinfo=None),
             open=ohlc["open"],
-            close=ohlc["close"],
             high=ohlc["high"],
             low=ohlc["low"],
+            close=ohlc["close"],
         )
 
     @classmethod
@@ -53,14 +53,39 @@ class Bar:
         """
         Converts a bar OHLC representation from CMC Markets into our
         representation.
+
+        I have had issues before with timezone and date misalignment with this data feed.
+        Example: when retrieving daily bars, I would get timestamps starting at 9pm or 10pm on the day before,
+        depending if DST is ongoing or not.
         """
 
+        # This logic works both for daily and weekly resolution
+        ts = datetime.strptime(ohlc["t"], "%Y-%m-%dT%H:%M:%S%z")
+
+        if ts.hour > 12:
+            ts = ts + timedelta(days=1)
+            ts = ts.replace(hour=0, minute=0)
+
         return cls(
-            time=datetime.strptime(ohlc["t"], "%Y-%m-%dT%H:%M:%S%z"),
+            time=ts,
             open=ohlc["o"],
-            close=ohlc["c"],
             high=ohlc["h"],
             low=ohlc["l"],
+            close=ohlc["c"],
+        )
+
+    @classmethod
+    def from_kraken(cls, ohlc: Sequence) -> "Bar":
+        """
+        converts a bar OHLC representation from Kraken into our
+        representation.
+        """
+        return cls(
+            time=datetime.fromtimestamp(ohlc[0]),
+            open=float(ohlc[1]),
+            high=float(ohlc[2]),
+            low=float(ohlc[3]),
+            close=float(ohlc[4]),
         )
 
     @validator("time", pre=True)

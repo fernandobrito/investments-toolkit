@@ -29,7 +29,7 @@ class AssetCache:
     # Singleton pattern: https://python-3-patterns-idioms-test.readthedocs.io/en/latest/Singleton.html
     def __new__(cls):
         if AssetCache.__instance is None:
-            logger.debug("[AssetCache] Creating a new instance of AssetCache")
+            logger.debug("Creating a new instance")
             AssetCache.__instance = object.__new__(cls)
 
             AssetCache.__instance.assets = None
@@ -38,7 +38,7 @@ class AssetCache:
                 CACHE_COLLECTION_NAME
             ).document(ASSETS_CACHE_DOCUMENT_NAME)
         else:
-            logger.debug("[AssetCache] Reusing existing AssetCache")
+            logger.debug("Reusing existing instance")
 
         return AssetCache.__instance
 
@@ -47,24 +47,26 @@ class AssetCache:
         Retrieves an asset given its ID
         """
         if not self.is_enabled():
-            logger.debug("[AssetCache] Cache is disabled")
+            logger.debug("Cache is disabled")
             return None
 
         if self.assets:
-            logger.debug("[AssetCache] Local cache is not empty")
+            logger.debug("Local cache is not empty")
             return self.assets.get(asset_fqn_id)
 
-        logger.debug("[AssetCache] Local cache is empty. Retrieving a copy from remote")
+        logger.debug("Local cache is empty. Retrieving a copy from remote")
         remote_assets = self.assets_ref.get()
 
         if not remote_assets.exists:
-            logger.debug("[AssetCache] Remote cache is empty. Adding empty object")
+            logger.debug("Remote cache is empty. Adding empty object")
             self.start_empty_cache()
             remote_assets = self.assets_ref.get()
 
         self.assets = {
             fqn_id: asset.Asset.from_dict(asset_dict) for fqn_id, asset_dict in remote_assets.to_dict().items()
         }
+
+        logger.debug(f"Retrieved from remote with size {len(self.assets)}")
 
         return self.assets.get(asset_fqn_id)
 
@@ -73,13 +75,13 @@ class AssetCache:
         Adds an asset to the cache
         """
         if not self.is_enabled():
-            logger.debug("[AssetCache] Cache is disabled")
+            logger.debug("Cache is disabled")
             return None
 
         self.assets_ref.update({firestore.Client.field_path(asset.fqn_id): asset.to_dict()})
 
         # Invalidates the cache
-        logger.debug("[AssetCache] Invaliding the local cache after modifying the remote cache")
+        logger.debug("Invalidating the local cache after modifying the remote cache")
         self.assets = None
 
     def start_empty_cache(self) -> None:

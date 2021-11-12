@@ -1,12 +1,13 @@
 import pandas as pd
 import pytest
+from pandas import DatetimeIndex
 from pandas.testing import assert_frame_equal
 
 from investmentstk.models.asset import Asset
 from investmentstk.models.bar import Bar
 from investmentstk.models.barset import (
     barset_to_ohlc_dataframe,
-    barset_to_single_column_dataframe,
+    ohlc_to_single_column_dataframe,
     BarSet,
     barset_from_csv_string,
 )
@@ -52,15 +53,17 @@ def test_barset_to_ohlc_dataframe(barset_upward_trend):
         low=[9.0, 10.0, 11.0, 12.0],
         high=[12.0, 13.0, 14.0, 15.0],
     )
-    expected = pd.DataFrame(expected_data, index=["2021-01-01", "2021-01-02", "2021-01-03", "2021-01-04"])
-    expected.index = pd.to_datetime(expected.index).date
+    expected = pd.DataFrame(
+        expected_data, index=DatetimeIndex(["2021-01-01", "2021-01-02", "2021-01-03", "2021-01-04"])
+    )
 
     # Fine that the order of the columns are different (check_like)
     assert_frame_equal(dataframe, expected, check_like=True)
 
 
-def test_barset_to_single_column_dataframe(asset, barset_upward_trend):
-    dataframe = barset_to_single_column_dataframe(barset_upward_trend, asset)
+def test_ohlc_to_single_column_dataframe(asset, barset_upward_trend):
+    dataframe = barset_to_ohlc_dataframe(barset_upward_trend)
+    dataframe = ohlc_to_single_column_dataframe(dataframe, asset)
     expected = pd.DataFrame(
         {asset.name: [11.0, 12.0, 13.0, 14.0]}, index=["2021-01-01", "2021-01-02", "2021-01-03", "2021-01-04"]
     )

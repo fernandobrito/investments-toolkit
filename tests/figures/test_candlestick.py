@@ -1,4 +1,4 @@
-from datetime import date
+from pandas import Timestamp
 
 from investmentstk.figures.candlestick import date_gaps
 from investmentstk.models.barset import barset_from_csv_string, barset_to_ohlc_dataframe
@@ -17,4 +17,4 @@ def test_date_gaps():
 
     result = date_gaps(dataframe)
 
-    assert result == {date(2021, 7, 3), date(2021, 7, 4)}
+    assert result == {Timestamp(2021, 7, 3), Timestamp(2021, 7, 4)}

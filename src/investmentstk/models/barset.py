@@ -35,14 +35,14 @@ def barset_to_ohlc_dataframe(barset: BarSet) -> pd.DataFrame:
     Useful for calculations that require access to more than one component of an asset.
     """
     df = pd.DataFrame(barset)
-    df = df.set_index("time")
-    df.index = df.index.date
+    df = df.set_index(pd.DatetimeIndex(df["time"]))
+    df = df.drop("time", axis=1)
     df = df.sort_index()
 
     return df
 
 
-def barset_to_single_column_dataframe(barset: BarSet, asset, column: str = "close") -> pd.DataFrame:
+def ohlc_to_single_column_dataframe(dataframe: pd.DataFrame, asset, column: str = "close") -> pd.DataFrame:
     """
     Converts a set of bars into a single column dataframe using `column` (like the close price) as the values.
     The dataframe is indexed by date and the column is named after the asset's name.
@@ -50,14 +50,12 @@ def barset_to_single_column_dataframe(barset: BarSet, asset, column: str = "clos
     Useful for converting barsets of several different assets into dataframes that will be merged
     together.
     """
-    df = pd.DataFrame(barset)
-    df = df.set_index("time")  # Assign the time as index
-    df = df[[column]]  # Use only the close price
-    df = df.rename(columns={column: asset.name})
-    df.index = df.index.date
-    df = df.sort_index()
+    dataframe = dataframe[[column]]  # Use only the close price
+    dataframe = dataframe.rename(columns={column: asset.name})
+    dataframe.index = dataframe.index.date
+    dataframe = dataframe.sort_index()
 
-    return df
+    return dataframe
 
 
 def barset_to_sorted_list(barset: BarSet) -> list[Bar]:

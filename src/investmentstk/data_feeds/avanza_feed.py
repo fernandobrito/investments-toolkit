@@ -21,7 +21,7 @@ TIME_RESOLUTION_TO_AVANZA_API_TIME_RANGE_MAP = {
 }
 
 
-class AvanzaClient(DataFeed):
+class AvanzaFeed(DataFeed):
     """
     A client to retrieve data from Avanza
 
@@ -31,7 +31,7 @@ class AvanzaClient(DataFeed):
     """
 
     @requests_cache_configured()
-    def retrieve_bars(
+    def _retrieve_bars(
         self,
         source_id: str,
         *,
@@ -77,7 +77,6 @@ class AvanzaClient(DataFeed):
 
         return response.json()["tickerSymbol"]
 
-    @requests_cache_configured(hours=0.5)
     def retrieve_price(self, source_id: str, instrument_type: Optional[str] = "stock") -> Price:
         response = requests.get(f"https://www.avanza.se/_mobile/market/{instrument_type}/{source_id}")
         response.raise_for_status()
