@@ -17,7 +17,7 @@ def nasdaq() -> Asset:
 
 
 @pytest.mark.external_http
-def test_retrieve_ohlc(subject, nasdaq):
+def test_retrieve_ohlc_day(subject, nasdaq):
     dataframe = subject.retrieve_ohlc(nasdaq.source_id, resolution=TimeResolution.day)
 
     first_bar = dataframe.iloc[0]
@@ -26,9 +26,24 @@ def test_retrieve_ohlc(subject, nasdaq):
     assert len(dataframe) > 0
     assert first_bar["high"] >= first_bar["low"]
 
-    # Test that days of the week are correct
+    # Test that days of the week are correct (never weekend)
     days_of_week = set(dataframe.index.map(lambda ts: ts.strftime("%A")))
     assert len(days_of_week & {"Saturday", "Sunday"}) == 0
+
+
+@pytest.mark.external_http
+def test_retrieve_ohlc_week(subject, nasdaq):
+    dataframe = subject.retrieve_ohlc(nasdaq.source_id, resolution=TimeResolution.week)
+
+    first_bar = dataframe.iloc[0]
+
+    # Basic sanity tests
+    assert len(dataframe) > 0
+    assert first_bar["high"] >= first_bar["low"]
+
+    # Test that days of the week are correct (only Sunday)
+    days_of_week = set(dataframe.index.map(lambda ts: ts.strftime("%A")))
+    assert len({"Sunday"} - days_of_week) == 0
 
 
 @pytest.mark.external_http
