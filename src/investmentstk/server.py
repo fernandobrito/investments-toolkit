@@ -1,6 +1,5 @@
 import dataclasses
 import json
-import os
 from enum import Enum
 from pathlib import Path
 from tempfile import SpooledTemporaryFile, NamedTemporaryFile
@@ -8,21 +7,23 @@ from typing import Iterable, Union
 
 import nbformat
 import papermill
+import requests
 import requests.exceptions
-from avanza import Avanza
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from nbconvert import HTMLExporter
 from pandas import DataFrame
 
+from investmentstk.brokers import AvanzaBroker, KrakenBroker
+from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.figures import correlation
 from investmentstk.figures.correlation import cluster_by_correlation
 from investmentstk.formulas.average_true_range import atr_stop_loss_from_asset
 from investmentstk.models.asset import Asset
-from investmentstk.models.barset import barset_to_single_column_dataframe
+from investmentstk.models.barset import ohlc_to_single_column_dataframe
 from investmentstk.models.price import Price
 from investmentstk.models.source import build_data_feed_from_source
-from investmentstk.persistence.requests_cache import requests_cache_configured
+from investmentstk.persistence.requests_cache import delete_cached_requests
 from investmentstk.utils.dataframe import convert_to_pct_change, merge_dataframes
 from investmentstk.utils.logger import get_logger
 
@@ -73,7 +74,7 @@ def price_bulk(p: str) -> list:
             asset_data.update(**dataclasses.asdict(price))
 
             output.append(asset_data)
-        except json.JSONDecodeError as e:
+        except (json.JSONDecodeError, requests.HTTPError) as e:
             source, _ = Asset.parse_fqn_id(asset_fqn)
             logger.error(
                 f"Exception raised. {type(e).__name__}: {e}", asset_id=asset_fqn, source=source, error=type(e).__name__
@@ -95,32 +96,37 @@ def stop_losses_broker(skip_cache: bool = False) -> list:
 
     :return: JSON object with fqn_id's and the stop loss price
     """
-    credentials = json.loads(os.environ["AVANZA_CREDENTIALS"])
-
-    # 1/20 = 3 minutes, as too many hits on the Avanza authentication
-    # API will start failing and they actually block your password authentication
-    # for 5 minutes
-    hours_cache = 1 / 20 if skip_cache else 1
-
-    with requests_cache_configured(
-        hours=hours_cache, allowable_methods=["GET", "HEAD", "POST"], ignored_parameters=["totpCode"]
-    ):
-        avanza = Avanza(
-            {
-                "username": credentials["username"],
-                "password": credentials["password"],
-                "totpSecret": credentials["totpSecret"],
-            }
-        )
+    brokers = [AvanzaBroker, KrakenBroker]
 
     output = []
 
-    for stop_loss in avanza.get_all_stop_losses():
-        asset_fqn = "AV:" + stop_loss["orderbook"]["id"]
-        trigger = stop_loss["trigger"]["value"]
-        valid_until = stop_loss["trigger"]["validUntil"]
+    for broker_class in brokers:
+        try:
+            stop_losses = broker_class(skip_cache=skip_cache).retrieve_stop_losses()
+            output.extend(stop_losses)
+        except requests.HTTPError as e:
+            logger.error(
+                f"Exception raised. {type(e).__name__}: {e}", client=broker_class.__name__, error=type(e).__name__
+            )
 
-        output.append({"asset_fqn": asset_fqn, "stop_loss_trigger": trigger, "stop_loss_valid_until": valid_until})
+    return output
+
+
+@app.get("/balance_brokers")
+def balance_brokers(skip_cache: bool = False):
+    brokers = [AvanzaBroker, KrakenBroker]
+
+    output = []
+
+    for broker_class in brokers:
+        try:
+            broker = broker_class(skip_cache=skip_cache)
+            balance = broker.retrieve_balance()
+            output.append({"broker": broker.friendly_name, **balance})
+        except requests.HTTPError as e:
+            logger.error(
+                f"Exception raised. {type(e).__name__}: {e}", client=broker_class.__name__, error=type(e).__name__
+            )
 
     return output
 
@@ -238,6 +244,11 @@ def correlations(p: str, e: str = "", f: OutputFormat = OutputFormat.CSV):
     return _format_output(clustered_df_corr, f)
 
 
+@app.get("/clear_cache")
+def clear_cache() -> list[str]:
+    return delete_cached_requests()
+
+
 def _parse_input_list(input_list: str) -> list[str]:
     """
     Converts a CSV list of assets IDs into a list of parsed IDs (but not Asset objects)
@@ -276,10 +287,12 @@ def _prepare_dataframe(portfolio: Iterable[Asset]) -> DataFrame:
     dataframes = []
 
     for asset in portfolio:
-        bars = asset.retrieve_bars()
-        dataframe = barset_to_single_column_dataframe(bars, asset)
+        dataframe = asset.retrieve_ohlc(resolution=TimeResolution.day)
+        dataframe = ohlc_to_single_column_dataframe(dataframe, asset)
         dataframes.append(dataframe)
 
     merged_dataframe = merge_dataframes(dataframes)
+    merged_dataframe = merged_dataframe.sort_index()
+    merged_dataframe = merged_dataframe.tail(261)  # business days in a year
 
     return merged_dataframe

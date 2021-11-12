@@ -42,7 +42,6 @@ from pandas import DataFrame
 
 from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.models.asset import Asset
-from investmentstk.models.barset import barset_to_ohlc_dataframe
 from investmentstk.models.source import Source
 from investmentstk.utils.calendar import is_weekend, days_to_next_month
 
@@ -64,11 +63,13 @@ def average_true_range(dataframe: DataFrame, periods: int = 14) -> pd.Series:
     ranges = pd.concat([high_low, high_close, low_close], axis=1)
     true_range = np.max(ranges, axis=1)
 
-    # TODO: I didn't bother parametrizing this as I will always use SSMA
+    # TODO: I didn't bother parametrizing this as I will always use SSMA (RMA)
     # Not 100% sure what adjust means. When True, it matches CMC sources. For Avanza,
     # it doesn't make much of a difference.
-    # For best results with CMC and Trading View:
-    # adjust=True, ignore_na=True
+    #
+    # With: adjust=True, ignore_na=True
+    # Good results with CMC and TradingView on day, but not week?
+    #
 
     # For SMA:  .rolling(periods).sum() / periods
     # For EMA:  .ewm(periods).mean()
@@ -147,7 +148,7 @@ def atr_stop_loss_from_asset(asset: Asset) -> pd.DataFrame:
     # TODO: Very specific to my trade system
     # Consider moving the default time resolution to a configuration file
 
-    if asset.source == Source.CMC:
+    if asset.source in [Source.CMC, Source.Kraken]:
         multiplier = 3.0
         resolution = TimeResolution.week
 
@@ -161,7 +162,6 @@ def atr_stop_loss_from_asset(asset: Asset) -> pd.DataFrame:
         # Otherwise, the one before
         offset = None if is_weekend(now) and days_to_next_month(now) <= 2 else -1
 
-    barset = asset.retrieve_bars(resolution=resolution)
-    dataframe = barset_to_ohlc_dataframe(barset)
+    dataframe = asset.retrieve_ohlc(resolution=resolution)
     dataframe = average_true_range_trailing_stop(dataframe, periods=21, multiplier=multiplier)
     return dataframe[0:offset]
