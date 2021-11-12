@@ -1,13 +1,14 @@
 import pytest
 
-from investmentstk.data_feeds.cmc_client import CMCClient
+from investmentstk.data_feeds import CMCFeed
+from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.models.asset import Asset
 from investmentstk.models.source import Source
 
 
 @pytest.fixture
-def subject() -> CMCClient:
-    return CMCClient()
+def subject() -> CMCFeed:
+    return CMCFeed()
 
 
 @pytest.fixture
@@ -16,13 +17,18 @@ def nasdaq() -> Asset:
 
 
 @pytest.mark.external_http
-def test_retrieve_bars(subject, nasdaq):
-    bars = subject.retrieve_bars(nasdaq.source_id)
+def test_retrieve_ohlc(subject, nasdaq):
+    dataframe = subject.retrieve_ohlc(nasdaq.source_id, resolution=TimeResolution.day)
 
-    first_bar = list(bars)[0]
+    first_bar = dataframe.iloc[0]
 
-    assert len(bars) > 0
-    assert first_bar.high >= first_bar.low
+    # Basic sanity tests
+    assert len(dataframe) > 0
+    assert first_bar['high'] >= first_bar['low']
+
+    # Test that days of the week are correct
+    days_of_week = set(dataframe.index.map(lambda ts: ts.strftime("%A")))
+    assert len(days_of_week & {"Saturday", "Sunday"}) == 0
 
 
 @pytest.mark.external_http

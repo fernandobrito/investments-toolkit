@@ -1,15 +1,14 @@
 import pytest
 
-from investmentstk.data_feeds.avanza_client import AvanzaClient
+from investmentstk.data_feeds import AvanzaFeed
 from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.models.asset import Asset
-from investmentstk.models.barset import barset_to_sorted_list
 from investmentstk.models.source import Source
 
 
 @pytest.fixture
-def subject() -> AvanzaClient:
-    return AvanzaClient()
+def subject() -> AvanzaFeed:
+    return AvanzaFeed()
 
 
 @pytest.fixture
@@ -19,21 +18,19 @@ def volvo() -> Asset:
 
 @pytest.mark.parametrize(
     "resolution, expected_possible_days_difference",
-    [[TimeResolution.day, [1]], [TimeResolution.week, [7]], [TimeResolution.month, [28, 29, 30, 31]]],
+    [[TimeResolution.day, [1, 3]], [TimeResolution.week, [7]], [TimeResolution.month, [28, 29, 30, 31]]],
     ids=["day", "week", "month"],
 )
 @pytest.mark.external_http
-def test_retrieve_daily_bars(subject, volvo, resolution, expected_possible_days_difference):
-    bars = subject.retrieve_bars(volvo.source_id, resolution=resolution)
+def test_retrieve_ohlc(subject, volvo, resolution, expected_possible_days_difference):
+    dataframe = subject.retrieve_ohlc(volvo.source_id, resolution=resolution)
 
-    ordered_bars = barset_to_sorted_list(bars)
+    first_bar = dataframe.iloc[0]
+    second_bar = dataframe.iloc[1]
 
-    first_bar = ordered_bars[0]
-    second_bar = ordered_bars[1]
-
-    assert len(bars) > 0
+    assert len(dataframe) > 0
     assert first_bar.high >= first_bar.low
-    assert (second_bar.time - first_bar.time).days in expected_possible_days_difference
+    assert (second_bar.name - first_bar.name).days in expected_possible_days_difference
 
 
 @pytest.mark.external_http
