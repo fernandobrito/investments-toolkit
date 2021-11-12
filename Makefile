@@ -33,12 +33,17 @@ lint:
 .PHONY: test
 test:
 	@echo "Running pytest"
+	@pipenv run pytest -m "not manual"
+
+.PHONY: test-all
+test-all:
+	@echo "Running pytest"
 	@pipenv run pytest
 
 .PHONY: test-coverage
 test-coverage:
 	@echo "Running pytest (with coverage)"
-	@pipenv run pytest --cov --cov-report=xml
+	@pipenv run pytest -m "not manual" --cov --cov-report=xml
 
 
 #######################

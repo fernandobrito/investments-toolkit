@@ -1,10 +1,7 @@
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
 
-RESAMPLE_LOGIC = {'open': 'first',
-                  'high': 'max',
-                  'low': 'min',
-                  'close': 'last'}
+RESAMPLE_LOGIC = {"open": "first", "high": "max", "low": "min", "close": "last"}
 
 
 def convert_to_pct_change(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -40,8 +37,9 @@ def merge_dataframes(dataframes: list[pd.DataFrame], join: str = "outer") -> pd.
 
 
 def convert_daily_ohlc_to_weekly(dataframe: pd.DataFrame) -> pd.DataFrame:
-    # From: https://stackoverflow.com/questions/34597926/converting-daily-stock-data-to-weekly-based-via-pandas-in-python
-    dataframe = dataframe.resample('W').apply(RESAMPLE_LOGIC)
+    # From:
+    # https://stackoverflow.com/questions/34597926/converting-daily-stock-data-to-weekly-based-via-pandas-in-python
+    dataframe = dataframe.resample("W").apply(RESAMPLE_LOGIC)
 
     offset = pd.Timedelta(days=-6)
     dataframe.index = dataframe.index + to_offset(offset)
@@ -50,7 +48,7 @@ def convert_daily_ohlc_to_weekly(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 
 def convert_daily_ohlc_to_monthly(dataframe: pd.DataFrame) -> pd.DataFrame:
-    dataframe = dataframe.resample('M').apply(RESAMPLE_LOGIC)
+    dataframe = dataframe.resample("M").apply(RESAMPLE_LOGIC)
     dataframe.index = dataframe.index + to_offset(pd.tseries.offsets.MonthBegin(n=-1))
 
     return dataframe

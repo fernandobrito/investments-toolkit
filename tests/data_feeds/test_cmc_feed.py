@@ -24,7 +24,7 @@ def test_retrieve_ohlc(subject, nasdaq):
 
     # Basic sanity tests
     assert len(dataframe) > 0
-    assert first_bar['high'] >= first_bar['low']
+    assert first_bar["high"] >= first_bar["low"]
 
     # Test that days of the week are correct
     days_of_week = set(dataframe.index.map(lambda ts: ts.strftime("%A")))

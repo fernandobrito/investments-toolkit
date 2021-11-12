@@ -21,7 +21,6 @@ SOURCES_DATA_FEED_MAP: dict[Source, Type[DataFeed]] = {
     Source.CMC: CMCFeed,
     Source.Kraken: KrakenFeed,
     Source.Nordnet: AvanzaFeed,  # TODO: Not very elegant and very specific to my needs
-
 }
 
 

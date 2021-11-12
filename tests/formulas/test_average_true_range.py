@@ -24,5 +24,6 @@ def test_average_true_range_trailing_stop(barset_volvo_2_months):
         [206.97, 205.14, 205.14, 203.05, 203.05, 203.05, 203.05, 203.05, 203.05, 203.05, 203.05, 203.05]
     )
 
-    assert_series_equal(stop_loss.stop.tail(12), expected, check_index=False, check_names=False, atol=0.01,
-                        check_freq=False)
+    assert_series_equal(
+        stop_loss.stop.tail(12), expected, check_index=False, check_names=False, atol=0.01, check_freq=False
+    )

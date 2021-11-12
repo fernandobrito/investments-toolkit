@@ -53,8 +53,9 @@ def test_barset_to_ohlc_dataframe(barset_upward_trend):
         low=[9.0, 10.0, 11.0, 12.0],
         high=[12.0, 13.0, 14.0, 15.0],
     )
-    expected = pd.DataFrame(expected_data,
-                            index=DatetimeIndex(["2021-01-01", "2021-01-02", "2021-01-03", "2021-01-04"]))
+    expected = pd.DataFrame(
+        expected_data, index=DatetimeIndex(["2021-01-01", "2021-01-02", "2021-01-03", "2021-01-04"])
+    )
 
     # Fine that the order of the columns are different (check_like)
     assert_frame_equal(dataframe, expected, check_like=True)

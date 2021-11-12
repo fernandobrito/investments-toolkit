@@ -6,6 +6,7 @@ import os
 from avanza import Avanza
 
 from investmentstk.brokers.broker import Broker
+from investmentstk.models import StopLoss, BrokerBalance
 from investmentstk.persistence.requests_cache import requests_cache_configured
 
 
@@ -33,7 +34,19 @@ class AvanzaBroker(Broker):
                 }
             )
 
-    def retrieve_stop_losses(self):
+    def retrieve_balance(self) -> BrokerBalance:
+        account_id = str(os.environ["AVANZA_ACCOUNT_ID"])
+
+        account_overview = self._client.get_account_overview(account_id)
+        balance = (
+            account_overview["totalPositionsValue"]
+            + account_overview["totalBalance"]
+            + account_overview["creditAccountBalance"]
+        )
+
+        return BrokerBalance(balance=balance, currency="SEK")
+
+    def retrieve_stop_losses(self) -> list[StopLoss]:
         output = []
 
         for stop_loss in self._client.get_all_stop_losses():
@@ -41,15 +54,8 @@ class AvanzaBroker(Broker):
             trigger = stop_loss["trigger"]["value"]
             valid_until = stop_loss["trigger"]["validUntil"]
 
-            output.append({"fqn_id": fqn_id, "stop_loss_trigger": trigger, "stop_loss_valid_until": valid_until})
+            entry = StopLoss(fqn_id=fqn_id, trigger=trigger, valid_until=valid_until)
+
+            output.append(entry)
 
         return output
-
-    def retrieve_balance(self):
-        account_id = str(os.environ['AVANZA_ACCOUNT_ID'])
-
-        account_overview = self._client.get_account_overview(account_id)
-        balance = account_overview['totalPositionsValue'] + account_overview['totalBalance'] + account_overview[
-            'creditAccountBalance']
-
-        return {"balance": balance, "currency": 'SEK'}

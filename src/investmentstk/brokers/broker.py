@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from investmentstk.models import BrokerBalance, StopLoss
+
 
 class Broker(ABC):
     @property
@@ -10,8 +12,13 @@ class Broker(ABC):
         """
 
     @abstractmethod
-    def retrieve_balance(self):
+    def retrieve_balance(self) -> BrokerBalance:
+        """
+        Retrieves the current broker balance with the associated currency
         """
 
-        :return:
+    @abstractmethod
+    def retrieve_stop_losses(self) -> list[StopLoss]:
+        """
+        Retrieves the active stop losses
         """

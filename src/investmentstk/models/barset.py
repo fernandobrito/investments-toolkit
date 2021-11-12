@@ -36,7 +36,7 @@ def barset_to_ohlc_dataframe(barset: BarSet) -> pd.DataFrame:
     """
     df = pd.DataFrame(barset)
     df = df.set_index(pd.DatetimeIndex(df["time"]))
-    df = df.drop('time', axis=1)
+    df = df.drop("time", axis=1)
     df = df.sort_index()
 
     return df

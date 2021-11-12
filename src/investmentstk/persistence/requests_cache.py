@@ -43,12 +43,12 @@ def delete_cached_requests() -> list[str]:
         cache = json.loads(Path(file_path).read_text())
         os.remove(file_path)
 
-        expires = datetime.fromisoformat(cache['expires'])
+        expires = datetime.fromisoformat(cache["expires"])
 
         if expires <= datetime.utcnow():
             print(f"Skipping expired: {file_path}")
             continue
 
-        deleted_and_valid.append(cache['url'])
+        deleted_and_valid.append(cache["url"])
 
     return deleted_and_valid

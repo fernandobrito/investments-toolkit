@@ -85,7 +85,7 @@ class Bar:
             open=float(ohlc[1]),
             high=float(ohlc[2]),
             low=float(ohlc[3]),
-            close=float(ohlc[4])
+            close=float(ohlc[4]),
         )
 
     @validator("time", pre=True)

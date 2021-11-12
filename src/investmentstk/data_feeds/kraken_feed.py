@@ -6,6 +6,7 @@ import pandas as pd
 import requests
 
 from investmentstk.data_feeds.data_feed import DataFeed, TimeResolution
+
 # Measured in minutes
 from investmentstk.models.bar import Bar
 from investmentstk.models.barset import BarSet, barset_to_ohlc_dataframe
@@ -46,26 +47,24 @@ class KrakenFeed(DataFeed):
             raise NotImplementedError("Kraken feed API does not support monthly OHLC")
 
         response = requests.get(
-            'https://api.kraken.com/0/public/OHLC',
+            "https://api.kraken.com/0/public/OHLC",
             params=dict(
-                pair=source_id,
-                interval=TIME_RESOLUTION_TO_KRAKEN_API_RESOLUTION_MAP[resolution],
-                since=0
-            )
+                pair=source_id, interval=str(TIME_RESOLUTION_TO_KRAKEN_API_RESOLUTION_MAP[resolution]), since="0"
+            ),
         )
 
         response.raise_for_status()
         data = response.json()
 
-        if data['error']:
+        if data["error"]:
             raise RuntimeError(f'Something went wrong: {data["error"]}')
 
         bars: BarSet = set()
-        data = data['result']
+        data = data["result"]
 
         # Result has only 2 keys: "last" and an internal id of the asset. If we drop "last", only
         # what we need is left
-        data.pop('last')
+        data.pop("last")
         data = list(data.values())[0]
 
         for ohlc in data:
@@ -74,8 +73,9 @@ class KrakenFeed(DataFeed):
         return bars
 
     @requests_cache_configured()
-    def retrieve_ohlc(self, source_id: str, *, resolution: TimeResolution = TimeResolution.day,
-                      instrument_type: Optional[str] = None) -> pd.DataFrame:
+    def retrieve_ohlc(
+        self, source_id: str, *, resolution: TimeResolution = TimeResolution.day, instrument_type: Optional[str] = None
+    ) -> pd.DataFrame:
         bars = self._retrieve_bars(source_id, resolution=TimeResolution.day)
         df = barset_to_ohlc_dataframe(bars)
 
@@ -104,27 +104,24 @@ class KrakenFeed(DataFeed):
 
         """
         one_day_ago = datetime.utcnow() - timedelta(hours=24)
+        since = time.mktime(one_day_ago.utctimetuple())
 
         response = requests.get(
-            'https://api.kraken.com/0/public/OHLC',
-            params=dict(
-                pair=source_id,
-                interval=60,  # hourly
-                since=time.mktime(one_day_ago.utctimetuple())
-            )
+            "https://api.kraken.com/0/public/OHLC",
+            params=dict(pair=source_id, interval="60", since=str(since)),  # hourly
         )
 
         response.raise_for_status()
         data = response.json()
 
-        if data['error']:
+        if data["error"]:
             raise RuntimeError(f'Something went wrong: {data["error"]}')
 
-        data = data['result']
+        data = data["result"]
 
         # Result has only 2 keys: "last" and an internal id of the asset. If we drop "last", only
         # what we need is left
-        data.pop('last')
+        data.pop("last")
         data = list(data.values())[0]
 
         price_24h_ago = float(data[0][3])
