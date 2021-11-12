@@ -61,7 +61,7 @@ deploy-cloud-run:
 		--image=$(IMAGE):latest \
 		--region=europe-west3 \
 		--min-instances=0 \
-		--max-instances=1 \
+		--max-instances=2 \
 		--service-account=$(GCP_SERVICE_ACCOUNT_EMAIL) \
 		--allow-unauthenticated \
 		--concurrency 160 \
