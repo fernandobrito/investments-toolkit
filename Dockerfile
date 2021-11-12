@@ -2,17 +2,23 @@
 # https://hub.docker.com/_/python
 FROM python:3.9-slim
 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends git && \
-    apt-get autoremove -y
-
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
 
 # Copy local code to the container image.
 ENV APP_HOME /app
 WORKDIR $APP_HOME
+
+COPY Pipfile Pipfile.lock ./
+
+RUN pip install pipenv && \
+      apt-get update && \
+      apt-get install -y --no-install-recommends gcc python3-dev libssl-dev build-essential git && \
+      pipenv install --deploy --system && \
+      apt-get remove -y gcc python3-dev libssl-dev && \
+      apt-get autoremove -y && \
+      pip uninstall pipenv -y
+
 COPY . ./
 
 # Install production dependencies.
