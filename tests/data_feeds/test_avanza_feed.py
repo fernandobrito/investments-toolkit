@@ -36,12 +36,14 @@ def test_retrieve_ohlc(subject, volvo, resolution, expected_possible_days_differ
 @pytest.mark.external_http
 def test_retrieve_asset_name(subject, volvo):
     name = subject.retrieve_asset_name(volvo.source_id)
+
     assert name == volvo.name
 
 
 @pytest.mark.external_http
 def test_retrieve_price(subject, volvo):
     price = subject.retrieve_price(volvo.source_id)
+
     assert 100 <= price.last <= 300
     assert -10 <= price.change <= 10
     assert -10 <= price.change_pct <= 10

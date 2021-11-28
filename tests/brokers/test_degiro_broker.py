@@ -2,19 +2,19 @@ from pprint import pprint
 
 import pytest
 
-from investmentstk.brokers import AvanzaBroker
+from investmentstk.brokers import DegiroBroker
 
 
 @pytest.mark.manual
-class TestAvanzaBroker:
+class TestDegiroaBroker:
     @pytest.fixture(scope="class")
-    def subject(self) -> AvanzaBroker:
-        return AvanzaBroker()
+    def subject(self) -> DegiroBroker:
+        return DegiroBroker()
 
     def test_retrieve_balance(self, subject):
         balance = subject.retrieve_balance()
 
-        print("Avanza balance:")
+        print("Degiro balance:")
         pprint(balance)
 
         assert balance.currency == "SEK"
@@ -23,7 +23,7 @@ class TestAvanzaBroker:
     def test_retrieve_stop_losses(self, subject):
         stop_losses = subject.retrieve_stop_losses()
 
-        print("Avanza stop losses:")
+        print("Degiro stop losses:")
         pprint(stop_losses)
 
         assert (len(stop_losses)) >= 1

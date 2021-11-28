@@ -1,9 +1,8 @@
-import time
-from datetime import datetime, timedelta
-from typing import Optional
-
 import pandas as pd
 import requests
+import time
+from datetime import datetime, timedelta
+from typing import Optional, Mapping
 
 from investmentstk.data_feeds.data_feed import DataFeed, TimeResolution
 
@@ -68,7 +67,7 @@ class KrakenFeed(DataFeed):
         data = list(data.values())[0]
 
         for ohlc in data:
-            bars.add(Bar.from_kraken(ohlc))
+            bars.add(self._ohlc_to_bar(ohlc))
 
         return bars
 
@@ -131,3 +130,17 @@ class KrakenFeed(DataFeed):
         change_pct = change / price_24h_ago * 100
 
         return Price(last=price_now, change=change, change_pct=change_pct)
+
+    @classmethod
+    def _ohlc_to_bar(cls, ohlc: Mapping) -> Bar:
+        """
+        Converts a bar OHLC representation from Kraken into our
+        representation.
+        """
+        return Bar(
+            time=datetime.fromtimestamp(ohlc[0]),
+            open=float(ohlc[1]),
+            high=float(ohlc[2]),
+            low=float(ohlc[3]),
+            close=float(ohlc[4]),
+        )

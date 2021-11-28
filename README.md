@@ -138,6 +138,10 @@ With this:
 =VALUE(ImportJSON(CONCATENATE("https://<HOST>/price/", A3, ":", C3), "/change_pct", "noHeaders"))/100
 ```
 
+### Bulk latest price endpoint
+
+(To be documented in the next version)
+
 ## Trailing stop loss
 
 Calculates a trailing stop loss based on the Average True Range (ATR) indicator. I use this stop loss both for position
@@ -158,6 +162,14 @@ notebook).
     </a>
 </p>
 
+### Endpoint
+
+(To be documented in the next version)
+
+### Stop loss report
+
+(To be documented in the next version)
+
 ## Technical indicators
 
 ### Average True Range
@@ -167,17 +179,38 @@ notebook).
 
 Source: [Investopedia](https://www.investopedia.com/terms/a/atr.asp)
 
+## Broker
+
+### Portfolio balance
+
+(To be documented in the next version)
+
+### Stop losses
+
+(To be documented in the next version)
+
 ---
 
 ## Architecture
 
 ### Data feeds
 
-Clients to retrieve asset information and historical prices from different sources. Currently, the following (
+Clients to retrieve (public) asset information and historical prices from different sources. Currently, the following (
 minimalist) clients are implemented:
 
 * [Avanza](https://www.avanza.se): a Swedish broker
 * [CMC Markets](https://www.cmcmarkets.com/sv-se/): an international CFD broker
+* [Degiro](https://degiro.se): an international broker
+* [Kraken](https://www.kraken.com/): a regulated cryptocurrency broker
+
+### Brokers
+
+Clients to retrieve information or perform actions on individual accounts on brokers, such as retrieving balances and
+active stop losses. Currently, the following (minimalist) clients are implemented:
+
+* [Avanza](https://www.avanza.se): a Swedish broker
+* [Degiro](https://www.degiro.se): an international broker
+* [Kraken](https://www.kraken.com/): a regulated cryptocurrency broker
 
 ### Figures
 
@@ -190,11 +223,15 @@ A module to hold formulas, such as the calculation of technical indicators.
 
 ### Models
 
-Python classes to represent assets, price bars and data sources.
+Python classes to represent data models, such as assets, price bars, stop losses, broker balances, etc.
 
 ### Persistence
 
 Clients to interact with Google Firestore and for setting up HTTP requests local cache.
+
+### Utils
+
+Modules for handling with loggers, environments, dates, etc.
 
 ## Deployment
 
@@ -203,6 +240,9 @@ uses of Google Cloud Run and [Google Firestore](https://cloud.google.com/firesto
 free tier.
 
 Check `.env.example` for the environment variables necessary to spin up an instance of the server.
+
+I also forward the production logs (from Google Cloud Logging) to a free Grafana Cloud account to build metrics on top
+of it. I plan to release this setup as another open source project at some point.
 
 ## Development
 
@@ -217,3 +257,9 @@ Useful commands:
 ## License
 
 This project is licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0.
+
+## Contributors
+
+* [@Chavithra](https://github.com/Chavithra), author of
+  the [degiro-connector](https://github.com/Chavithra/degiro-connector) Python package, very kindly contributed with
+  code to make use of his package (#10). Thank you!

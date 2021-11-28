@@ -1,7 +1,7 @@
 import os
-from typing import ClassVar, Optional
-
 import requests
+from datetime import datetime, timedelta
+from typing import ClassVar, Optional, Mapping
 
 from investmentstk.data_feeds.data_feed import DataFeed, TimeResolution
 from investmentstk.models.bar import Bar
@@ -42,12 +42,12 @@ class CMCFeed(DataFeed):
             raise ValueError(f"{resolution} resolution not supported for {self.__class__.__name__} source")
 
         response.raise_for_status()
-
-        bars: BarSet = set()
         data = response.json()
 
+        bars: BarSet = set()
+
         for ohlc in data:
-            bars.add(Bar.from_cmc(ohlc))
+            bars.add(self._ohlc_to_bar(ohlc, resolution))
 
         return bars
 
@@ -72,3 +72,33 @@ class CMCFeed(DataFeed):
         mid_price = (data["buy"] + data["sell"]) / 2
 
         return Price(last=mid_price, change=data["movement_point"], change_pct=data["movement_percentage"])
+
+    @classmethod
+    def _ohlc_to_bar(cls, ohlc: Mapping, resolution: TimeResolution) -> Bar:
+        """
+        Converts a bar OHLC representation from CMC Markets into our
+        representation.
+
+        I have had issues before with timezone and date misalignment with this data feed.
+        Example: when retrieving daily bars, I would get timestamps starting at 9pm or 10pm on the day before,
+        depending if DST is ongoing or not.
+        """
+
+        # This logic works both for daily and weekly resolution
+        ts = datetime.strptime(ohlc["t"], "%Y-%m-%dT%H:%M:%S%z")
+
+        if ts.hour > 12:
+            ts = ts + timedelta(days=1)
+            ts = ts.replace(hour=0, minute=0)
+
+        # CMC starts the week on Sunday, but most other places do on Monday
+        if resolution == TimeResolution.week:
+            ts = ts + timedelta(days=1)
+
+        return Bar(
+            time=ts,
+            open=ohlc["o"],
+            high=ohlc["h"],
+            low=ohlc["l"],
+            close=ohlc["c"],
+        )

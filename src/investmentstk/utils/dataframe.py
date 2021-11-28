@@ -41,6 +41,7 @@ def convert_daily_ohlc_to_weekly(dataframe: pd.DataFrame) -> pd.DataFrame:
     # https://stackoverflow.com/questions/34597926/converting-daily-stock-data-to-weekly-based-via-pandas-in-python
     dataframe = dataframe.resample("W").apply(RESAMPLE_LOGIC)
 
+    # Convert date labels so weeks start on Monday
     offset = pd.Timedelta(days=-6)
     dataframe.index = dataframe.index + to_offset(offset)
 
@@ -49,6 +50,9 @@ def convert_daily_ohlc_to_weekly(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 def convert_daily_ohlc_to_monthly(dataframe: pd.DataFrame) -> pd.DataFrame:
     dataframe = dataframe.resample("M").apply(RESAMPLE_LOGIC)
-    dataframe.index = dataframe.index + to_offset(pd.tseries.offsets.MonthBegin(n=-1))
+
+    # Convert date labels so months start on day 1
+    offset = pd.tseries.offsets.MonthBegin(n=-1)
+    dataframe.index = dataframe.index + to_offset(offset)
 
     return dataframe

@@ -11,6 +11,7 @@ import requests
 # Construct the request and print the result
 from investmentstk.brokers.broker import Broker
 from investmentstk.models import StopLoss, BrokerBalance
+from investmentstk.persistence.requests_cache import requests_cache_configured
 
 
 class KrakenBroker(Broker):
@@ -29,6 +30,7 @@ class KrakenBroker(Broker):
         self._api_key = credentials["api_key"]
         self._private_key = credentials["private_key"]
 
+    @requests_cache_configured(hours=0.5)
     def retrieve_balance(self) -> BrokerBalance:
         """
 
@@ -54,6 +56,7 @@ class KrakenBroker(Broker):
         # eb = Equivalent balance (combined balance of all currencies)
         return BrokerBalance(balance=float(data["eb"]), currency="EUR")
 
+    @requests_cache_configured(hours=0.5)
     def retrieve_stop_losses(self) -> list[StopLoss]:
         response = self._kraken_request(
             "/0/private/OpenOrders",
@@ -75,6 +78,7 @@ class KrakenBroker(Broker):
                 continue
 
             entry = StopLoss(
+                # TODO: Avoid hardcoding KR here
                 fqn_id="KR:" + order["descr"]["pair"],
                 trigger=order["descr"]["price"],
                 valid_until=(order["expiretm"] or "2099-12-31"),
