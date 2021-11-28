@@ -1,4 +1,5 @@
 import datetime
+from typing import Optional
 
 # From: https://stackoverflow.com/a/64885601/3950305
 from investmentstk.data_feeds.data_feed import TimeResolution
@@ -37,9 +38,9 @@ def days_to_next_month(dt: datetime.datetime) -> int:
 def round_day(dt: datetime.datetime):
     if dt.hour > 12:
         dt = dt + datetime.timedelta(days=1)
-        return dt.replace(hour=0, minute=0)
-
-    return dt
+        return dt.replace(hour=0, minute=0, second=0)
+    else:
+        return dt.replace(hour=0, minute=0, second=0)
 
 
 def is_saturday(dt: datetime.datetime) -> bool:
@@ -69,7 +70,7 @@ def is_weekend(dt) -> bool:
     return weekday == 6 or weekday == 7
 
 
-def is_last_bar_closed(resolution: TimeResolution) -> bool:
+def is_last_bar_closed(resolution: TimeResolution, now: Optional[datetime.datetime] = None) -> bool:
     """
     On weekly resolution, returns true if it's weekend (no more trading will happen)
     On monthly resolution, returns true if there are no more week days left in the month
@@ -81,18 +82,20 @@ def is_last_bar_closed(resolution: TimeResolution) -> bool:
     On Saturday or Sunday, when I usually update my stop losses, I want to see the stop loss
     taking into account the current bar, since it's "over"/closed.
 
-    :param resolution:
     :return: True if there should be no more changes expected in the last price bar
     """
 
-    now = datetime.datetime.utcnow()
+    if not now:
+        now = datetime.datetime.utcnow()
 
     if resolution == TimeResolution.week:
         return is_weekend(now)
-    else:
+    elif resolution == TimeResolution.month:
         if is_sunday(now) and days_to_next_month(now) == 1:
             return True
         elif is_saturday(now) and days_to_next_month(now) <= 2:
             return True
+    else:
+        raise ValueError(f"Resolution {resolution} not supported")
 
     return False
