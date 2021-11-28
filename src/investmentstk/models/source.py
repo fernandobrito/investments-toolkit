@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Type
 
-from investmentstk.data_feeds import AvanzaFeed, CMCFeed, DataFeed, KrakenFeed
+from investmentstk.data_feeds import AvanzaFeed, CMCFeed, DataFeed, KrakenFeed, DegiroFeed
 
 
 class Source(str, Enum):
@@ -12,6 +12,7 @@ class Source(str, Enum):
 
     Avanza = "AV"
     CMC = "CMC"
+    Degiro = "DG"
     Kraken = "KR"
     Nordnet = "NN"
 
@@ -19,6 +20,7 @@ class Source(str, Enum):
 SOURCES_DATA_FEED_MAP: dict[Source, Type[DataFeed]] = {
     Source.Avanza: AvanzaFeed,
     Source.CMC: CMCFeed,
+    Source.Degiro: DegiroFeed,
     Source.Kraken: KrakenFeed,
     Source.Nordnet: AvanzaFeed,  # TODO: Not very elegant and very specific to my needs
 }
