@@ -34,12 +34,20 @@ def barset_to_ohlc_dataframe(barset: BarSet) -> pd.DataFrame:
 
     Useful for calculations that require access to more than one component of an asset.
     """
-    df = pd.DataFrame(barset)
-    df = df.set_index(pd.DatetimeIndex(df["time"]))
-    df = df.drop("time", axis=1)
-    df = df.sort_index()
+    dataframe = pd.DataFrame(barset)
+    return format_ohlc_dataframe(dataframe)
 
-    return df
+
+def format_ohlc_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Useful for dependencies that already provide OHLC data in a dataframe.
+    Converts it to our format.
+    """
+    dataframe = dataframe.set_index(pd.DatetimeIndex(dataframe["time"]))
+    dataframe = dataframe.drop("time", axis=1)
+    dataframe = dataframe.sort_index()
+
+    return dataframe
 
 
 def ohlc_to_single_column_dataframe(dataframe: pd.DataFrame, asset, column: str = "close") -> pd.DataFrame:

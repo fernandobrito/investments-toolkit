@@ -1,7 +1,8 @@
+import dataclasses
 from dataclasses import dataclass
-from typing import Optional, Mapping
 
 import pandas as pd
+from typing import Optional, Mapping
 
 from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.models.source import Source, build_data_feed_from_source
@@ -20,10 +21,6 @@ class Asset:
     source: Source
     source_id: str
     name: Optional[str] = None
-
-    @property
-    def fqn_id(self):
-        return f"{self.source.value}:{self.source_id}"
 
     @classmethod
     @logger_autobind_from_args(asset_id="fqn_id")
@@ -54,12 +51,25 @@ class Asset:
         client = build_data_feed_from_source(self.source)
         return client.retrieve_ohlc(self.source_id, resolution=resolution)
 
+    def retrieve_price(self) -> dict:
+        client = build_data_feed_from_source(self.source)
+
+        output = dict(fqn_id=self.fqn_id, name=self.name)
+
+        output.update(dataclasses.asdict(client.retrieve_price(self.source_id)))
+
+        return output
+
     def to_dict(self) -> dict:
         return dict(source=self.source.name, source_id=self.source_id, name=self.name)
 
     def merge_dict(self, data: Mapping) -> None:
         for key, value in data.items():
             object.__setattr__(self, key, value)
+
+    @property
+    def fqn_id(self):
+        return f"{self.source.value}:{self.source_id}"
 
     @classmethod
     def from_dict(cls, data: Mapping) -> "Asset":

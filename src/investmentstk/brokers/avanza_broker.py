@@ -3,6 +3,7 @@ from __future__ import absolute_import  # type: ignore
 import json
 import os
 
+import wrapt
 from avanza import Avanza
 
 from investmentstk.brokers.broker import Broker
@@ -15,13 +16,14 @@ class AvanzaBroker(Broker):
     def friendly_name(self):
         return "Avanza"
 
+    @wrapt.synchronized
     def __init__(self, *, skip_cache: bool = False):
         credentials = json.loads(os.environ["AVANZA_CREDENTIALS"])
 
         # 1/20 = 3 minutes, as too many hits on the Avanza authentication
         # API will start failing and they actually block your password authentication
         # for 5 minutes
-        hours_cache = 1 / 20 if skip_cache else 1
+        hours_cache = 1 / 20 if skip_cache else 0.5
 
         with requests_cache_configured(
             hours=hours_cache, allowable_methods=["GET", "HEAD", "POST"], ignored_parameters=["totpCode"]
@@ -34,6 +36,7 @@ class AvanzaBroker(Broker):
                 }
             )
 
+    @requests_cache_configured(hours=0.5)
     def retrieve_balance(self) -> BrokerBalance:
         account_id = str(os.environ["AVANZA_ACCOUNT_ID"])
 
@@ -46,10 +49,12 @@ class AvanzaBroker(Broker):
 
         return BrokerBalance(balance=balance, currency="SEK")
 
+    @requests_cache_configured(hours=0.5)
     def retrieve_stop_losses(self) -> list[StopLoss]:
         output = []
 
         for stop_loss in self._client.get_all_stop_losses():
+            # TODO: Avoid hardcoding AV here
             fqn_id = "AV:" + stop_loss["orderbook"]["id"]
             trigger = stop_loss["trigger"]["value"]
             valid_until = stop_loss["trigger"]["validUntil"]

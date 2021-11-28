@@ -2,9 +2,11 @@ cache/http_cache/
 cache/*.sqlite
 docs/
 
+.ipynb_checkpoints/
 .pytest_cache/
 .mypy_cache/
 htmlcov/
+.coverage
 
 Dockerfile
 .idea/

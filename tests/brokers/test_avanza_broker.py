@@ -7,7 +7,7 @@ from investmentstk.brokers import AvanzaBroker
 
 @pytest.mark.manual
 class TestAvanzaBroker:
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def subject(self) -> AvanzaBroker:
         return AvanzaBroker()
 

@@ -34,16 +34,18 @@ SSMA. The EMA felt too fast. Example: on the start of trends, SSMA gave me a lar
 and after a long and strong in the trend, SSMA gave me tighter stops.
 
 """
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
-from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.models.asset import Asset
-from investmentstk.models.source import Source
-from investmentstk.utils.calendar import is_weekend, days_to_next_month
+from investmentstk.strategy.brito_trend_following import (
+    PERIODICITY_PER_BROKER,
+    ATR_MULTIPLIER_PER_PERIODICITY,
+    ATR_PERIOD,
+)
+from investmentstk.utils.calendar import is_last_bar_closed
 
 
 def average_true_range(dataframe: DataFrame, periods: int = 14) -> pd.Series:
@@ -143,25 +145,11 @@ def atr_stop_loss_from_asset(asset: Asset) -> pd.DataFrame:
     :return: a BarSet dataframe with the ATR and ATR stop loss
     """
 
-    now = datetime.utcnow()
+    resolution = PERIODICITY_PER_BROKER[asset.source]
+    multiplier = ATR_MULTIPLIER_PER_PERIODICITY[resolution]
 
-    # TODO: Very specific to my trade system
-    # Consider moving the default time resolution to a configuration file
-
-    if asset.source in [Source.CMC, Source.Kraken]:
-        multiplier = 3.0
-        resolution = TimeResolution.week
-
-        # If it's a weekend, take the current bar. Otherwise, the one before
-        offset = None if is_weekend(now) else -1
-    else:
-        multiplier = 2.5
-        resolution = TimeResolution.month
-
-        # If it's the last 2 days of the month and a weekend, take the current bar.
-        # Otherwise, the one before
-        offset = None if is_weekend(now) and days_to_next_month(now) <= 2 else -1
+    offset = None if is_last_bar_closed(resolution) else -1
 
     dataframe = asset.retrieve_ohlc(resolution=resolution)
-    dataframe = average_true_range_trailing_stop(dataframe, periods=21, multiplier=multiplier)
+    dataframe = average_true_range_trailing_stop(dataframe, periods=ATR_PERIOD, multiplier=multiplier)
     return dataframe[0:offset]

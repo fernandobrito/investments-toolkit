@@ -4,11 +4,27 @@ from contextlib import contextmanager
 from datetime import timedelta, datetime
 from pathlib import Path
 
+import requests
 import requests_cache
 from requests_cache import json_serializer
 
+from investmentstk.utils.logger import get_logger
+
 current_folder = Path(__file__).resolve().parent
 http_cache_folder = current_folder / "../../.." / "cache" / "http_cache"
+
+logger = get_logger()
+
+
+def avoid_caching_google_api_requests(response: requests.Response) -> bool:
+    """
+    Returns a boolean indicating whether or not that response should be cached.
+    """
+
+    if "google" in response.url.lower():
+        return False
+
+    return True
 
 
 def cache_default_options(hours: float = 24):
@@ -22,11 +38,12 @@ def cache_default_options(hours: float = 24):
         expire_after=timedelta(hours=hours),
         cache_name=http_cache_folder,
         serializer=json_serializer,
+        filter_fn=avoid_caching_google_api_requests,
     )
 
 
 @contextmanager
-def requests_cache_configured(*, hours: float = 24, **kwargs):
+def requests_cache_configured(*, hours: float = 1, **kwargs):
     """
     Wrapper around a configured requests_cache context manager
     """
@@ -46,7 +63,7 @@ def delete_cached_requests() -> list[str]:
         expires = datetime.fromisoformat(cache["expires"])
 
         if expires <= datetime.utcnow():
-            print(f"Skipping expired: {file_path}")
+            logger.debug(f"Skipping expired: {file_path}")
             continue
 
         deleted_and_valid.append(cache["url"])

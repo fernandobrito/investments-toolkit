@@ -1,10 +1,6 @@
-import dataclasses
-import json
 from enum import Enum
-from pathlib import Path
-from tempfile import SpooledTemporaryFile, NamedTemporaryFile
-from typing import Iterable, Union
 
+import json
 import nbformat
 import papermill
 import requests
@@ -13,16 +9,17 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from nbconvert import HTMLExporter
 from pandas import DataFrame
+from pathlib import Path
+from tempfile import SpooledTemporaryFile, NamedTemporaryFile
+from typing import Iterable, Union
 
-from investmentstk.brokers import AvanzaBroker, KrakenBroker
+from investmentstk.brokers import AvanzaBroker, KrakenBroker, DegiroBroker
 from investmentstk.data_feeds.data_feed import TimeResolution
 from investmentstk.figures import correlation
 from investmentstk.figures.correlation import cluster_by_correlation
 from investmentstk.formulas.average_true_range import atr_stop_loss_from_asset
 from investmentstk.models.asset import Asset
 from investmentstk.models.barset import ohlc_to_single_column_dataframe
-from investmentstk.models.price import Price
-from investmentstk.models.source import build_data_feed_from_source
 from investmentstk.persistence.requests_cache import delete_cached_requests
 from investmentstk.utils.dataframe import convert_to_pct_change, merge_dataframes
 from investmentstk.utils.logger import get_logger
@@ -50,7 +47,7 @@ async def root():
 
 
 @app.get("/price/{fqn_id}")
-def price(fqn_id: str) -> Price:
+def price(fqn_id: str) -> dict:
     """
     Returns price details (last price, % chance) of a given asset
 
@@ -68,12 +65,9 @@ def price_bulk(p: str) -> list:
 
     for asset_fqn in assets_fqn:
         try:
-            asset_data = {"fqn_id": asset_fqn}
-
             price = _price_common(asset_fqn)
-            asset_data.update(**dataclasses.asdict(price))
 
-            output.append(asset_data)
+            output.append(price)
         except (json.JSONDecodeError, requests.HTTPError) as e:
             source, _ = Asset.parse_fqn_id(asset_fqn)
             logger.error(
@@ -83,10 +77,11 @@ def price_bulk(p: str) -> list:
     return output
 
 
-def _price_common(asset_fqn: str) -> Price:
-    source, source_id = Asset.parse_fqn_id(asset_fqn)
-    source_client = build_data_feed_from_source(source)
-    return source_client.retrieve_price(source_id)
+def _price_common(asset_fqn: str) -> dict:
+    asset = Asset.from_id(asset_fqn)
+    price = asset.retrieve_price()
+
+    return price
 
 
 @app.get("/stop_losses_broker")
@@ -96,13 +91,14 @@ def stop_losses_broker(skip_cache: bool = False) -> list:
 
     :return: JSON object with fqn_id's and the stop loss price
     """
-    brokers = [AvanzaBroker, KrakenBroker]
+    brokers = [AvanzaBroker, DegiroBroker, KrakenBroker]
 
     output = []
 
     for broker_class in brokers:
         try:
             stop_losses = broker_class(skip_cache=skip_cache).retrieve_stop_losses()
+            stop_losses = [stop_loss.to_response() for stop_loss in stop_losses]
             output.extend(stop_losses)
         except requests.HTTPError as e:
             logger.error(
@@ -114,7 +110,7 @@ def stop_losses_broker(skip_cache: bool = False) -> list:
 
 @app.get("/balance_brokers")
 def balance_brokers(skip_cache: bool = False):
-    brokers = [AvanzaBroker, KrakenBroker]
+    brokers = [AvanzaBroker, DegiroBroker, KrakenBroker]
 
     output = []
 
@@ -122,7 +118,7 @@ def balance_brokers(skip_cache: bool = False):
         try:
             broker = broker_class(skip_cache=skip_cache)
             balance = broker.retrieve_balance()
-            output.append({"broker": broker.friendly_name, **balance})
+            output.append({"broker": broker.friendly_name, **balance.dict()})
         except requests.HTTPError as e:
             logger.error(
                 f"Exception raised. {type(e).__name__}: {e}", client=broker_class.__name__, error=type(e).__name__
@@ -150,8 +146,7 @@ def stop_loss_atr_bulk(p: str) -> list:
 
     for asset_fqn in assets_fqn:
         try:
-            asset_data = {"fqn_id": asset_fqn}
-            asset_data["stop_loss_atr"] = _stop_loss_atr_common(asset_fqn)
+            asset_data = {"fqn_id": asset_fqn, "stop_loss_atr": _stop_loss_atr_common(asset_fqn)}
 
             output.append(asset_data)
         except (json.JSONDecodeError, requests.exceptions.HTTPError) as e:
@@ -172,14 +167,16 @@ def _stop_loss_atr_common(asset_fqn: str):
 
 
 @app.get("/stop_losses_report")
-def stop_losses_report(p: str):
+def stop_losses_report(p: str, all: bool = False):
     """
     Generates a HTML report with stop losses for all the assets provided.
 
     :param p: CSV of assets in the portfolio, in the format AV:XXXX,AV:YYYY,CMC:ZZZZ
+    :param all: whether to include all assets or only the relevant ones
+               (weekends only showing weekly-based assets, monthly only showing monthly-based assets)
     :return:
     """
-    template_path = current_folder / "examples" / "average_true_range_trailing_stop.ipynb"
+    template_path = current_folder / "templates" / "stop_loss_report.ipynb"
 
     assets_fqn = _parse_input_list(p)
 
@@ -189,7 +186,7 @@ def stop_losses_report(p: str):
             template_path,
             temp_file.name,
             progress_bar=False,
-            parameters=dict(assets=assets_fqn),
+            parameters=dict(assets=assets_fqn, show_all=all),
             report_mode=True,  # Add metadata to input cells
         )
 
